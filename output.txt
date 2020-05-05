@@ -1,0 +1,37 @@
+
+> F := [x^3 + 12, 2*y^2 - x];
+                                                              3          2
+                                                       F := [x  + 12, 2 y  - x]
+
+> a, b := Basis(F, plex(x, y), output=extended);
+                                           6          2                   2    4        2
+                               a, b := [2 y  + 3, -2 y  + x], [[1/4, 1/4 x  + y  + 1/2 y  x], [0, -1]]
+
+
+> simplify(Multiply(convert(b, Matrix), Transpose(convert(F, Matrix))));
+                                                             [   6     ]
+                                                             [2 y  + 3 ]
+                                                             [         ]
+                                                             [    2    ]
+                                                             [-2 y  + x]
+
+> simplify(Transpose(convert(a, Matrix)));
+                                                             [   6     ]
+                                                             [2 y  + 3 ]
+                                                             [         ]
+                                                             [    2    ]
+                                                             [-2 y  + x]
+
+
+> truncatePolynomial := proc (poly, order_1, order_2)
+>   return poly
+> end proc;
+                               truncatePolynomial := proc(poly, order_1, order_2) return poly end proc
+
+
+> print truncatePolynomial(1, 2, 3);
+on line 18 of "profKapur.mpl", syntax error, missing operator or `;`:
+print truncatePolynomial(1, 2, 3);
+                       ^
+> quit
+memory used=3.9MB, alloc=40.3MB, time=0.05

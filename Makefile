@@ -1,0 +1,2 @@
+all:
+	maple profKapur.mpl
