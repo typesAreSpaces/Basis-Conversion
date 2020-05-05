@@ -55,7 +55,7 @@ while true do
   num_elements := numelems(F_t_gb):
   while curr_index < num_elements do
     if evalb(LeadingMonomial(F_t_gb[curr_index], order_2) <> LeadingMonomial(G[curr_index], order_2)) then
-      print("There are the witness polynomials that prove G_s is not empty (g_j, h_j) ", F_t_gb[curr_index], G[curr_index]):
+      print("There are the witness polynomials that prove G_s is not empty (g_j, h_j) respectively ", F_t_gb[curr_index], G[curr_index]):
       repeat := true:
       break:
     end if:
@@ -80,4 +80,3 @@ end proc:
 # Test basisConversion
 print( basisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(x, y, z)) ):
 # ---------------------------------------------------------------------------
-
