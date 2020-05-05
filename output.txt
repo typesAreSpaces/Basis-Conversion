@@ -49,19 +49,20 @@
 >   num_elements := numelems(F_t_gb):
 >   while curr_index < num_elements do
 >     if evalb(LeadingMonomial(F_t_gb[curr_index], order_2) <> LeadingMonomial(G[curr_index], order_2)) then
->       print("There are the witness polynomials that prove G_s is not empty (g_j, h_j) ", F_t_gb[curr_index], G[curr_index]):
+>       print("There are the witness polynomials that prove G_s is not empty (g_j, h_j) respectively ", F_t_gb[curr_index], G[curr_index]):
 >       repeat := true:
 >       break:
 >     end if:
 >     curr_index := curr_index + 1:
 >   end do:
 
+>   #F   := G:
+>   F   := InterReduce(G, order_2):
+
 >   if repeat = false then
 >     print("Done"):
->     return InterReduce(G, order_2):
+>     return F:
 >   else
->     #F   := G:
->     F   := InterReduce(G, order_2):
 >     F_t := map(v -> truncatePolynomial(v, order_1, order_2), F):
 >     print("Current F", F):
 >     print("Current F_t", F_t):
@@ -98,8 +99,8 @@
 
                                                             "Step 6 and 7"
 
-                                                                                                  4   4
-                    "There are the witness polynomials that prove G_s is not empty (g_j, h_j) ", z , z  - y z - 1
+                                                                                                         4   4
+              "There are the witness polynomials that prove G_s is not empty (g_j, h_j) respectively ", z , z  - y z - 1
 
                                                             4             2    2    2
                                             "Current F", [-z  + y z + 1, y  - z , -z  + x]
@@ -124,8 +125,8 @@
 
                                                             "Step 6 and 7"
 
-                                                                                                  7   7      3
-                    "There are the witness polynomials that prove G_s is not empty (g_j, h_j) ", z , z  - 2 z  - y
+                                                                                                        7   7      3
+             "There are the witness polynomials that prove G_s is not empty (g_j, h_j) respectively ", z , z  - 2 z  - y
 
                                                        8      4        7      3        2
                                         "Current F", [z  - 3 z  + 1, -z  + 2 z  + y, -z  + x]
@@ -155,6 +156,5 @@
                                                [z  - 3 z  + 1, -z  + 2 z  + y, -z  + x]
 
 # ---------------------------------------------------------------------------
-
 > quit
 memory used=5.0MB, alloc=40.3MB, time=0.05

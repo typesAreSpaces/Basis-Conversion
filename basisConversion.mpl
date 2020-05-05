@@ -62,12 +62,12 @@ while true do
     curr_index := curr_index + 1:
   end do:
 
+  #F   := G:
+  F   := InterReduce(G, order_2):
   if repeat = false then
     print("Done"):
-    return InterReduce(G, order_2):
+    return F:
   else
-    #F   := G:
-    F   := InterReduce(G, order_2):
     F_t := map(v -> truncatePolynomial(v, order_1, order_2), F):
     print("Current F", F):
     print("Current F_t", F_t):
