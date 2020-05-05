@@ -1,31 +1,10 @@
-# Display contents of the packages since
-# we might use them latter
-with(LinearAlgebra):
-with(Groebner): 
+with(LinearAlgebra, 
+  Multiply, Transpose):
+with(Groebner,      
+  Basis, InterReduce, LeadingTerm, LeadingMonomial, TestOrder): 
 
 writeto("output.txt"):
 
-#F := [x^3 + 12, 2*y^2 - x]:
-#a, b := Basis(F, plex(x, y), output=extended):
-
-#simplify(Multiply(convert(b, Matrix), Transpose(convert(F, Matrix)))):
-#simplify(Transpose(convert(a, Matrix))):
-
-#_m_order_1 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]:
-#order_1 = 'matrix'(_m_order_1, [x, y, z]):
-
-
-#f_example_monomial_order := proc (poly, order_1::{MonomialOrder, ShortMonomialOrder})
-#return sort([op(poly)], (b, a) -> TestOrder(a, b, order_1))
-#end proc:
-
-#F := 1/2*x + 2*y*z:
-
-#print(f_example_monomial_order(F, 'matrix'([[1,0,0],[0,1,0],[0,0,1]], [x, y, z])        )):
-#print(f_example_monomial_order(F, plex(x, y, z)   )):
-#print(f_example_monomial_order(F, grlex(x, y, z)  )):
-
-# ---------------------------------------------------------------------------
 truncatePolynomial := proc (poly, order_1, order_2)
 local leading_coeff_1, leading_mon_1, leading_term, curr_index, polys:
 
@@ -45,13 +24,6 @@ else
   return add(x, x in polys[1..curr_index]):
 end if:
 end proc:
-# ---------------------------------------------------------------------------
-
-# ---------------------------------------------------------------------------
-# Test truncatePolynomial
-print( truncatePolynomial(x^2 - y*z + 1, grlex(x, y, z), plex(x, y, z)) ):
-print( truncatePolynomial(y^2 - x, grlex(x, y, z), plex(x, y, z)) ):
-# ---------------------------------------------------------------------------
 
 basisConversion := proc (basis, order_1, order_2)
 local F, F_t, num_iter, F_t_gb, multipliers, G, repeat, curr_index, num_elements:
@@ -78,8 +50,8 @@ while true do
   print("G (= M' * F): ", G):
 
   print("Step 6 and 7"):
-  repeat := false:
-  curr_index := 1:
+  repeat       := false:
+  curr_index   := 1:
   num_elements := numelems(F_t_gb):
   while curr_index < num_elements do
     if evalb(LeadingMonomial(F_t_gb[curr_index], order_2) <> LeadingMonomial(G[curr_index], order_2)) then
@@ -94,8 +66,11 @@ while true do
     print("Done"):
     return InterReduce(G, order_2):
   else
-    F := G:
+    #F   := G:
+    F   := InterReduce(G, order_2):
     F_t := map(v -> truncatePolynomial(v, order_1, order_2), F):
+    print("Current F", F):
+    print("Current F_t", F_t):
   end if:
 end do:
 

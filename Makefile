@@ -1,2 +1,2 @@
 all:
-	maple profKapur.mpl
+	maple basisConversion.mpl

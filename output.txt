@@ -1,37 +1,160 @@
 
-> F := [x^3 + 12, 2*y^2 - x];
-                                                              3          2
-                                                       F := [x  + 12, 2 y  - x]
-
-> a, b := Basis(F, plex(x, y), output=extended);
-                                           6          2                   2    4        2
-                               a, b := [2 y  + 3, -2 y  + x], [[1/4, 1/4 x  + y  + 1/2 y  x], [0, -1]]
-
-
-> simplify(Multiply(convert(b, Matrix), Transpose(convert(F, Matrix))));
-                                                             [   6     ]
-                                                             [2 y  + 3 ]
-                                                             [         ]
-                                                             [    2    ]
-                                                             [-2 y  + x]
-
-> simplify(Transpose(convert(a, Matrix)));
-                                                             [   6     ]
-                                                             [2 y  + 3 ]
-                                                             [         ]
-                                                             [    2    ]
-                                                             [-2 y  + x]
-
-
 > truncatePolynomial := proc (poly, order_1, order_2)
->   return poly
-> end proc;
-                               truncatePolynomial := proc(poly, order_1, order_2) return poly end proc
+> local leading_coeff_1, leading_mon_1, leading_term, curr_index, polys:
 
+> leading_coeff_1, leading_mon_1 := LeadingTerm(poly, order_1):
+> leading_term                   := leading_coeff_1 * leading_mon_1:
+> curr_index                     := 1:
 
-> print truncatePolynomial(1, 2, 3);
-on line 18 of "profKapur.mpl", syntax error, missing operator or `;`:
-print truncatePolynomial(1, 2, 3);
-                       ^
+> polys := sort([op(poly)], (b, a) -> TestOrder(a, b, order_2)):
+
+> while evalb(polys[curr_index] <> leading_term) do
+>   curr_index := curr_index + 1:
+> end do:
+
+> if curr_index = 1 then
+>   return polys[1]:
+> else
+>   return add(x, x in polys[1..curr_index]):
+> end if:
+> end proc:
+
+> basisConversion := proc (basis, order_1, order_2)
+> local F, F_t, num_iter, F_t_gb, multipliers, G, repeat, curr_index, num_elements:
+
+> print("Step 1"):
+> F   := Basis(basis, order_1):
+> F_t := map(v -> truncatePolynomial(v, order_1, order_2), F):
+> print("Current F", F):
+> print("Current F_t", F_t):
+
+> num_iter := 1:
+
+> while true do
+>   print("Iteration ", num_iter):
+>   num_iter := num_iter + 1:
+
+>   print("Step 3 & 4"):
+>   F_t_gb, multipliers := Basis(F_t, order_2, output=extended):
+>   print("Matrix of multipliers M': ", multipliers):
+>   print("H (= M' F_t): ", F_t_gb):
+>   
+>   print("Step 5"):
+>   G := convert(simplify(Multiply(convert(multipliers, Matrix), Transpose(convert(F, Matrix)))), list):
+>   print("G (= M' * F): ", G):
+
+>   print("Step 6 and 7"):
+>   repeat       := false:
+>   curr_index   := 1:
+>   num_elements := numelems(F_t_gb):
+>   while curr_index < num_elements do
+>     if evalb(LeadingMonomial(F_t_gb[curr_index], order_2) <> LeadingMonomial(G[curr_index], order_2)) then
+>       print("There are the witness polynomials that prove G_s is not empty (g_j, h_j) ", F_t_gb[curr_index], G[curr_index]):
+>       repeat := true:
+>       break:
+>     end if:
+>     curr_index := curr_index + 1:
+>   end do:
+
+>   if repeat = false then
+>     print("Done"):
+>     return InterReduce(G, order_2):
+>   else
+>     #F   := G:
+>     F   := InterReduce(G, order_2):
+>     F_t := map(v -> truncatePolynomial(v, order_1, order_2), F):
+>     print("Current F", F):
+>     print("Current F_t", F_t):
+>   end if:
+> end do:
+
+> end proc:
+
+# ---------------------------------------------------------------------------
+# Test basisConversion
+> print( basisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(x, y, z)) ):
+                                                               "Step 1"
+
+                                                            2       2       2
+                                             "Current F", [z  - x, y  - x, x  - y z - 1]
+
+                                                                  2       2       2
+                                                 "Current F_t", [z  - x, y  - x, x ]
+
+                                                           "Iteration ", 1
+
+                                                             "Step 3 & 4"
+
+                                                             2    2    2
+                            "Matrix of multipliers M': ", [[y  + z , -z  + x, 1], [-1, 1, 0], [-1, 0, 0]]
+
+                                                                   4   2    2    2
+                                               "H (= M' F_t): ", [z , y  - z , -z  + x]
+
+                                                               "Step 5"
+
+                                                              4             2    2    2
+                                          "G (= M' * F): ", [z  - y z - 1, y  - z , -z  + x]
+
+                                                            "Step 6 and 7"
+
+                                                                                                  4   4
+                    "There are the witness polynomials that prove G_s is not empty (g_j, h_j) ", z , z  - y z - 1
+
+                                                            4             2    2    2
+                                            "Current F", [-z  + y z + 1, y  - z , -z  + x]
+
+                                                                 4         2    2
+                                               "Current F_t", [-z  + y z, y , -z  + x]
+
+                                                           "Iteration ", 2
+
+                                                             "Step 3 & 4"
+
+                                                             3
+                           "Matrix of multipliers M': ", [[-z  - y, z, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]]
+
+                                                                7    4         2    2
+                                            "H (= M' F_t): ", [z , -z  + y z, y , -z  + x]
+
+                                                               "Step 5"
+
+                                                      7      3        4             2    2    2
+                                  "G (= M' * F): ", [z  - 2 z  - y, -z  + y z + 1, y  - z , -z  + x]
+
+                                                            "Step 6 and 7"
+
+                                                                                                  7   7      3
+                    "There are the witness polynomials that prove G_s is not empty (g_j, h_j) ", z , z  - 2 z  - y
+
+                                                       8      4        7      3        2
+                                        "Current F", [z  - 3 z  + 1, -z  + 2 z  + y, -z  + x]
+
+                                                                 8    7        2
+                                                "Current F_t", [z , -z  + y, -z  + x]
+
+                                                           "Iteration ", 3
+
+                                                             "Step 3 & 4"
+
+                                   "Matrix of multipliers M': ", [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+
+                                                                   8    7        2
+                                               "H (= M' F_t): ", [z , -z  + y, -z  + x]
+
+                                                               "Step 5"
+
+                                                          8      4        7      3        2
+                                      "G (= M' * F): ", [z  - 3 z  + 1, -z  + 2 z  + y, -z  + x]
+
+                                                            "Step 6 and 7"
+
+                                                                "Done"
+
+                                                 8      4        7      3        2
+                                               [z  - 3 z  + 1, -z  + 2 z  + y, -z  + x]
+
+# ---------------------------------------------------------------------------
+
 > quit
-memory used=3.9MB, alloc=40.3MB, time=0.05
+memory used=5.0MB, alloc=40.3MB, time=0.06
