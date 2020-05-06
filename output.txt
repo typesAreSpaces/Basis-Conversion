@@ -1,170 +1,67 @@
-
-> truncatePolynomial := proc (poly, order_1, order_2)
-> local leading_coeff_1, leading_mon_1, leading_term, 
-> curr_index, polys:
-
-> leading_coeff_1, leading_mon_1 := LeadingTerm(poly, order_1):
-> leading_term                   := leading_coeff_1 * leading_mon_1:
-> curr_index                     := 1:
-
-> polys := sort([op(poly)], (b, a) -> TestOrder(a, b, order_2)):
-
-> while evalb(polys[curr_index] <> leading_term) do
->   curr_index := curr_index + 1:
-> end do:
-
-> if curr_index = 1 then
->   return polys[1]:
-> else
->   return add(x, x in polys[1..curr_index]):
-> end if:
-> end proc:
-
-> basisConversion := proc (basis, order_1, order_2)
-> local F, F_t, num_iter, 
-> F_t_gb, multipliers, 
-> G, repeat, curr_index, num_elements:
-
-> print("Step 1"):
-> F   := Basis(basis, order_1):
-> F_t := map(v -> truncatePolynomial(v, order_1, order_2), F):
-> print("Current F", F):
-> print("Current F_t", F_t):
-
-> num_iter := 1:
-
-> while true do
->   print("Iteration ", num_iter):
->   num_iter := num_iter + 1:
-
->   print("Step 3 & 4"):
->   F_t_gb, multipliers := Basis(F_t, order_2, output=extended):
->   print("Matrix of multipliers M': ", multipliers):
->   print("H (= M' F_t): ", F_t_gb):
->   
->   print("Step 5"):
->   G := convert(simplify(
->   Multiply(convert(multipliers, Matrix), Transpose(convert(F, Matrix)))), list):
->   print("G (= M' * F): ", G):
-
->   print("Step 6 and 7"):
->   repeat       := false:
->   curr_index   := 1:
->   num_elements := numelems(F_t_gb):
->   while curr_index < num_elements do
->     if evalb(LeadingMonomial(F_t_gb[curr_index], order_2) 
->       <> LeadingMonomial(G[curr_index], order_2)) then
->       print("There are the witness polynomials that prove"\
->        "G_s is not empty (g_j, h_j) respectively ", 
->       F_t_gb[curr_index], G[curr_index]):
->       repeat := true:
->       break:
->     end if:
->     curr_index := curr_index + 1:
->   end do:
-
->   #F   := G:
->   F   := InterReduce(G, order_2):
->   if repeat = false then
->     print("Done"):
->     return F:
->   else
->     F_t := map(v -> truncatePolynomial(v, order_1, order_2), F):
->     print("Current F", F):
->     print("Current F_t", F_t):
->   end if:
-> end do:
-
-> end proc:
-
 # ---------------------------------------------------------------------------
-# Test basisConversion
-> print(basisConversion(
-> [y^2-x,x^2-y*z-1,z^2-x], 
-> grlex(x, y, z), 
-> plex(x, y, z)
-> )):
-                                                               "Step 1"
-
-                                                            2       2       2
-                                             "Current F", [z  - x, y  - x, x  - y z - 1]
-
-                                                                  2       2       2
-                                                 "Current F_t", [z  - x, y  - x, x ]
-
-                                                           "Iteration ", 1
-
-                                                             "Step 3 & 4"
-
-                                                             2    2    2
-                            "Matrix of multipliers M': ", [[y  + z , -z  + x, 1], [-1, 1, 0], [-1, 0, 0]]
-
-                                                                   4   2    2    2
-                                               "H (= M' F_t): ", [z , y  - z , -z  + x]
-
-                                                               "Step 5"
-
-                                                              4             2    2    2
-                                          "G (= M' * F): ", [z  - y z - 1, y  - z , -z  + x]
-
-                                                            "Step 6 and 7"
-
-                                                                                                        4   4
-              "There are the witness polynomials that proveG_s is not empty (g_j, h_j) respectively ", z , z  - y z - 1
-
-                                                            4             2    2    2
-                                            "Current F", [-z  + y z + 1, y  - z , -z  + x]
-
-                                                                 4         2    2
-                                               "Current F_t", [-z  + y z, y , -z  + x]
-
-                                                           "Iteration ", 2
-
-                                                             "Step 3 & 4"
-
-                                                             3
-                           "Matrix of multipliers M': ", [[-z  - y, z, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]]
-
-                                                                7    4         2    2
-                                            "H (= M' F_t): ", [z , -z  + y z, y , -z  + x]
-
-                                                               "Step 5"
-
-                                                      7      3        4             2    2    2
-                                  "G (= M' * F): ", [z  - 2 z  - y, -z  + y z + 1, y  - z , -z  + x]
-
-                                                            "Step 6 and 7"
-
-                                                                                                        7   7      3
-              "There are the witness polynomials that proveG_s is not empty (g_j, h_j) respectively ", z , z  - 2 z  - y
-
-                                                       8      4        7      3        2
-                                        "Current F", [z  - 3 z  + 1, -z  + 2 z  + y, -z  + x]
-
-                                                                 8    7        2
-                                                "Current F_t", [z , -z  + y, -z  + x]
-
-                                                           "Iteration ", 3
-
-                                                             "Step 3 & 4"
-
-                                   "Matrix of multipliers M': ", [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-
-                                                                   8    7        2
-                                               "H (= M' F_t): ", [z , -z  + y, -z  + x]
-
-                                                               "Step 5"
-
-                                                          8      4        7      3        2
-                                      "G (= M' * F): ", [z  - 3 z  + 1, -z  + 2 z  + y, -z  + x]
-
-                                                            "Step 6 and 7"
-
-                                                                "Done"
-
-                                                 8      4        7      3        2
-                                               [z  - 3 z  + 1, -z  + 2 z  + y, -z  + x]
-
+# Test
+"Basis conversion of ", [y^2-x, x^2-y*z-1, z^2-x], " from ", grlex(x,y,z), " to ", plex(x,y,z)
+"Step 1"
+"Current F", [z^2-x, y^2-x, x^2-y*z-1]
+"Current F_t", [z^2-x, y^2-x, x^2]
+"Iteration ", 1
+"Step 3 & 4"
+"Matrix of multipliers M': ", [[y^2+z^2, -z^2+x, 1], [-1, 1, 0], [-1, 0, 0]]
+"H (= M' F_t): ", [z^4, y^2-z^2, -z^2+x]
+"Step 5"
+"G (= M' * F): ", [z^4-y*z-1, y^2-z^2, -z^2+x]
+"Step 6 and 7"
+"There are the witness polynomials that proveG_s is not empty (g_j, h_j) respectively ", z^4, z^4-y*z-1
+"Current F", [-z^4+y*z+1, y^2-z^2, -z^2+x]
+"Current F_t", [-z^4+y*z, y^2, -z^2+x]
+"Iteration ", 2
+"Step 3 & 4"
+"Matrix of multipliers M': ", [[-z^3-y, z, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]]
+"H (= M' F_t): ", [z^7, -z^4+y*z, y^2, -z^2+x]
+"Step 5"
+"G (= M' * F): ", [z^7-2*z^3-y, -z^4+y*z+1, y^2-z^2, -z^2+x]
+"Step 6 and 7"
+"There are the witness polynomials that proveG_s is not empty (g_j, h_j) respectively ", z^7, z^7-2*z^3-y
+"Current F", [z^8-3*z^4+1, -z^7+2*z^3+y, -z^2+x]
+"Current F_t", [z^8, -z^7+y, -z^2+x]
+"Iteration ", 3
+"Step 3 & 4"
+"Matrix of multipliers M': ", [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+"H (= M' F_t): ", [z^8, -z^7+y, -z^2+x]
+"Step 5"
+"G (= M' * F): ", [z^8-3*z^4+1, -z^7+2*z^3+y, -z^2+x]
+"Step 6 and 7"
+"Done"
+"Result obtained using implemented algorithm ", [z^8-3*z^4+1, -z^7+2*z^3+y, -z^2+x]
+"Result obtained using Maple Basis algorithm ", [z^8-3*z^4+1, -z^7+2*z^3+y, -z^2+x]
+""
+"Basis conversion of ", [y^2-x, x^2-y*z-1, z^2-x], " from ", plex(x,y,z), " to ", grlex(x,y,z)
+"Step 1"
+"Current F", [z^8-3*z^4+1, -z^7+2*z^3+y, -z^2+x]
+"Current F_t", [z^8, -z^7+2*z^3+y, -z^2+x]
+"Iteration ", 1
+"Step 3 & 4"
+"Matrix of multipliers M': ", [[0, 0, -1], [1, z, 2*z^2+2*x], [-2*x*z+y, -2*x*z^2+y*z-4, 4*z^5+2*y*z^2-8*z], [x^2*y*z^2+4*x^2*z-4*x*y
+-8*z, x^2*y*z^3+4*x^2*z^2-2*x*y*z+y^2-8*z^2+8*x, -2*x*y*z^6-y^2*z^5-x*y^2*z^3-8*x*z^5-4*x*y*z^2+2*y^2*z-16*z^3-8*y], [x^2*z^2-2*x, x^
+2*z^3+y, -2*x*z^6-y*z^5-x*y*z^3+2*y*z], [-2*x*z^2+y*z+4, -2*x*z^3+y*z^2, 4*z^6+2*y*z^3+y^2]]
+"H (= M' F_t): ", [z^2-x, 2*x^2+y*z, y^2*z-8*x*z-4*y, y^3, 2*x*y*z+y^2, x*y^2]
+"Step 5"
+"G (= M' * F): ", [z^2-x, -3*z^4+2*x^2+y*z+1, 6*x*z^5-3*y*z^4+(y^2-10*x)*z-3*y, -3*x^2*y*z^6+(-12*x^2+24)*z^5+12*x*y*z^4+x^2*y*z^2+(4
+*x^2-8)*z+y^3-4*y*x, (-3*z^6+z^2)*x^2+(6*z^4+2*y*z-2)*x+y^2, 6*x*z^6-3*y*z^5-12*z^4+x*y^2-2*x*z^2+y*z+4]
+"Step 6 and 7"
+"There are the witness polynomials that proveG_s is not empty (g_j, h_j) respectively ", 2*x^2+y*z, -3*z^4+2*x^2+y*z+1
+"Current F", [z^2-x, y^2-x, x^2-y*z-1]
+"Current F_t", [z^2-x, y^2-x, x^2]
+"Iteration ", 2
+"Step 3 & 4"
+"Matrix of multipliers M': ", [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+"H (= M' F_t): ", [z^2-x, y^2-x, x^2]
+"Step 5"
+"G (= M' * F): ", [z^2-x, y^2-x, x^2-y*z-1]
+"Step 6 and 7"
+"Done"
+"Result obtained using implemented algorithm ", [z^2-x, y^2-x, x^2-y*z-1]
+"Result obtained using Maple Basis algorithm ", [z^2-x, y^2-x, x^2-y*z-1]
+""
 # ---------------------------------------------------------------------------
-> quit
-memory used=5.0MB, alloc=40.3MB, time=0.06
+memory used=9.0MB, alloc=41.3MB, time=0.13
