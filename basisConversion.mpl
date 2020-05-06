@@ -6,7 +6,8 @@ with(Groebner,
 writeto("output.txt"):
 
 truncatePolynomial := proc (poly, order_1, order_2)
-local leading_coeff_1, leading_mon_1, leading_term, curr_index, polys:
+local leading_coeff_1, leading_mon_1, leading_term, 
+curr_index, polys:
 
 leading_coeff_1, leading_mon_1 := LeadingTerm(poly, order_1):
 leading_term                   := leading_coeff_1 * leading_mon_1:
@@ -26,7 +27,9 @@ end if:
 end proc:
 
 basisConversion := proc (basis, order_1, order_2)
-local F, F_t, num_iter, F_t_gb, multipliers, G, repeat, curr_index, num_elements:
+local F, F_t, num_iter, 
+F_t_gb, multipliers, 
+G, repeat, curr_index, num_elements:
 
 print("Step 1"):
 F   := Basis(basis, order_1):
@@ -46,7 +49,8 @@ while true do
   print("H (= M' F_t): ", F_t_gb):
   
   print("Step 5"):
-  G := convert(simplify(Multiply(convert(multipliers, Matrix), Transpose(convert(F, Matrix)))), list):
+  G := convert(simplify(
+  Multiply(convert(multipliers, Matrix), Transpose(convert(F, Matrix)))), list):
   print("G (= M' * F): ", G):
 
   print("Step 6 and 7"):
@@ -54,8 +58,11 @@ while true do
   curr_index   := 1:
   num_elements := numelems(F_t_gb):
   while curr_index < num_elements do
-    if evalb(LeadingMonomial(F_t_gb[curr_index], order_2) <> LeadingMonomial(G[curr_index], order_2)) then
-      print("There are the witness polynomials that prove G_s is not empty (g_j, h_j) respectively ", F_t_gb[curr_index], G[curr_index]):
+    if evalb(LeadingMonomial(F_t_gb[curr_index], order_2) 
+      <> LeadingMonomial(G[curr_index], order_2)) then
+      print("There are the witness polynomials that prove"\
+       "G_s is not empty (g_j, h_j) respectively ", 
+      F_t_gb[curr_index], G[curr_index]):
       repeat := true:
       break:
     end if:
@@ -78,5 +85,9 @@ end proc:
 
 # ---------------------------------------------------------------------------
 # Test basisConversion
-print( basisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(x, y, z)) ):
+print(basisConversion(
+[y^2-x,x^2-y*z-1,z^2-x], 
+grlex(x, y, z), 
+plex(x, y, z)
+)):
 # ---------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 
 > truncatePolynomial := proc (poly, order_1, order_2)
-> local leading_coeff_1, leading_mon_1, leading_term, curr_index, polys:
+> local leading_coeff_1, leading_mon_1, leading_term, 
+> curr_index, polys:
 
 > leading_coeff_1, leading_mon_1 := LeadingTerm(poly, order_1):
 > leading_term                   := leading_coeff_1 * leading_mon_1:
@@ -20,7 +21,9 @@
 > end proc:
 
 > basisConversion := proc (basis, order_1, order_2)
-> local F, F_t, num_iter, F_t_gb, multipliers, G, repeat, curr_index, num_elements:
+> local F, F_t, num_iter, 
+> F_t_gb, multipliers, 
+> G, repeat, curr_index, num_elements:
 
 > print("Step 1"):
 > F   := Basis(basis, order_1):
@@ -40,7 +43,8 @@
 >   print("H (= M' F_t): ", F_t_gb):
 >   
 >   print("Step 5"):
->   G := convert(simplify(Multiply(convert(multipliers, Matrix), Transpose(convert(F, Matrix)))), list):
+>   G := convert(simplify(
+>   Multiply(convert(multipliers, Matrix), Transpose(convert(F, Matrix)))), list):
 >   print("G (= M' * F): ", G):
 
 >   print("Step 6 and 7"):
@@ -48,8 +52,11 @@
 >   curr_index   := 1:
 >   num_elements := numelems(F_t_gb):
 >   while curr_index < num_elements do
->     if evalb(LeadingMonomial(F_t_gb[curr_index], order_2) <> LeadingMonomial(G[curr_index], order_2)) then
->       print("There are the witness polynomials that prove G_s is not empty (g_j, h_j) respectively ", F_t_gb[curr_index], G[curr_index]):
+>     if evalb(LeadingMonomial(F_t_gb[curr_index], order_2) 
+>       <> LeadingMonomial(G[curr_index], order_2)) then
+>       print("There are the witness polynomials that prove"\
+>        "G_s is not empty (g_j, h_j) respectively ", 
+>       F_t_gb[curr_index], G[curr_index]):
 >       repeat := true:
 >       break:
 >     end if:
@@ -58,7 +65,6 @@
 
 >   #F   := G:
 >   F   := InterReduce(G, order_2):
-
 >   if repeat = false then
 >     print("Done"):
 >     return F:
@@ -73,7 +79,11 @@
 
 # ---------------------------------------------------------------------------
 # Test basisConversion
-> print( basisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(x, y, z)) ):
+> print(basisConversion(
+> [y^2-x,x^2-y*z-1,z^2-x], 
+> grlex(x, y, z), 
+> plex(x, y, z)
+> )):
                                                                "Step 1"
 
                                                             2       2       2
@@ -99,8 +109,8 @@
 
                                                             "Step 6 and 7"
 
-                                                                                                         4   4
-              "There are the witness polynomials that prove G_s is not empty (g_j, h_j) respectively ", z , z  - y z - 1
+                                                                                                        4   4
+              "There are the witness polynomials that proveG_s is not empty (g_j, h_j) respectively ", z , z  - y z - 1
 
                                                             4             2    2    2
                                             "Current F", [-z  + y z + 1, y  - z , -z  + x]
@@ -126,7 +136,7 @@
                                                             "Step 6 and 7"
 
                                                                                                         7   7      3
-             "There are the witness polynomials that prove G_s is not empty (g_j, h_j) respectively ", z , z  - 2 z  - y
+              "There are the witness polynomials that proveG_s is not empty (g_j, h_j) respectively ", z , z  - 2 z  - y
 
                                                        8      4        7      3        2
                                         "Current F", [z  - 3 z  + 1, -z  + 2 z  + y, -z  + x]
@@ -157,4 +167,4 @@
 
 # ---------------------------------------------------------------------------
 > quit
-memory used=5.0MB, alloc=40.3MB, time=0.05
+memory used=5.0MB, alloc=40.3MB, time=0.06
