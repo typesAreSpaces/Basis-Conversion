@@ -1,0 +1,45 @@
+"Basis conversion of ", [x*y-x*z+z, x^2-z, -x^2*y*z+2*x^3-1], " from ", tdeg(x,y,z), " to ", plex(z,y,x)
+"Step 1"
+"Current F", [x+y-z, y^2-2*y*z+z^2-z, y*z^2+2*y*z-2*z^2+1, z^4-3*z^3-4*y*z+2*z^2-y+2*z-2]
+"Current F_t", [x+y-z, y^2-2*y*z+z^2-z, y*z^2, z^4]
+"Iteration ", 1
+"Step 3 & 4"
+"Matrix of multipliers M': ", [[x^4-x^3*y+x^3*z-x*y^3+2*x*y^2*z-y^4+y^3*z+x^2*z+x*z^2+y^3+y*z^2+z^3-y*z, x^3+x^2*y+2*x*y^2+y^3-x*y-y^
+2, -x^2-x-1, 1], [-z+y-x+1, -1, 0, 0], [-z+y-x, -1, 0, 0]]
+"H (= M' F_t): ", [x^5, -x^2+x+y, -x^2+z]
+"Step 5"
+"G (= M' * F): ", [-3*z^3+(2*x^2+2*x+4)*z^2+(-2*x^2*y-2*x*y-6*y+2)*z+x^5-x^2-x-y-3, -x^2+x+y, -x^2+z]
+"Step 6 and 7"
+"There are the witness polynomials that proveG_s is not empty (g_j, h_j) respectively ", x^5, -3*z^3+(2*x^2+2*x+4)*z^2+(-2*x^2*y-2*x*
+y-6*y+2)*z+x^5-x^2-x-y-3
+"Current F", [x^6-x^5-2*x^3+1, -x^2+x+y, -x^2+z]
+"Current F_t", [x^6, -x^2+y, -x^2+z]
+"Iteration ", 2
+"Step 3 & 4"
+"Matrix of multipliers M': ", [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+"H (= M' F_t): ", [x^6, -x^2+y, -x^2+z]
+"Step 5"
+"G (= M' * F): ", [x^6-x^5-2*x^3+1, -x^2+x+y, -x^2+z]
+"Step 6 and 7"
+"Done"
+"Result obtained using implemented algorithm ", [x^6-x^5-2*x^3+1, -x^2+x+y, -x^2+z]
+"Result obtained using Maple Basis algorithm ", [x^6-x^5-2*x^3+1, -x^2+x+y, -x^2+z]
+"Are these results the same? ", true
+""
+"Basis conversion of ", [x+y+z, x*y+x*z+y*z, x*y*z-1], " from ", grlex(x,y,z), " to ", plex(x,y,z)
+"Step 1"
+"Current F", [x+y+z, y^2+y*z+z^2, z^3-1]
+"Current F_t", [x, y^2, z^3]
+"Iteration ", 1
+"Step 3 & 4"
+"Matrix of multipliers M': ", [[0, 0, 1], [0, 1, 0], [1, 0, 0]]
+"H (= M' F_t): ", [z^3, y^2, x]
+"Step 5"
+"G (= M' * F): ", [z^3-1, y^2+y*z+z^2, x+y+z]
+"Step 6 and 7"
+"Done"
+"Result obtained using implemented algorithm ", [z^3-1, y^2+y*z+z^2, x+y+z]
+"Result obtained using Maple Basis algorithm ", [z^3-1, y^2+y*z+z^2, x+y+z]
+"Are these results the same? ", true
+""
+memory used=7.3MB, alloc=41.3MB, time=0.07

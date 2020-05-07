@@ -10,7 +10,7 @@ int main(){
 
   if(in.is_open()){
     while(getline(in, line))
-      if(line[0] != '>' && line.size() > 0)
+      if(line[0] != '>' && line[0] != '#' && line.size() > 0)
         out << line << std::endl;
     in.close();
   }

@@ -84,15 +84,26 @@ end do:
 end proc:
 
 testBasisConversion := proc (basis, order_1, order_2)
+local output_1, output_2:
 lprint("Basis conversion of ", basis, " from ", order_1, " to ", order_2):
-lprint("Result obtained using implemented algorithm ", basisConversion(basis, order_1, order_2)):
-lprint("Result obtained using Maple Basis algorithm ", Basis(basis, order_2)):
+output_1 := basisConversion(basis, order_1, order_2):
+output_2 := Basis(basis, order_2):
+lprint("Result obtained using implemented algorithm ", output_1):
+lprint("Result obtained using Maple Basis algorithm ", output_2):
+lprint("Are these results the same? ", evalb(output_1 = output_2)):
 lprint(""):
 end proc:
 
-
 # ---------------------------------------------------------------------------
-# Test
-testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(x, y, z)):
-testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], plex(x, y, z), grlex(x, y, z)):
+# Testing
+#testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(x, y, z)):
+#testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(x, z, y)):
+#testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(y, x, z)):
+#testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(y, z, x)):
+#testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(z, x, y)):
+#testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(z, y, x)):
+#testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], plex(x, y, z), grlex(x, y, z)):
+#testBasisConversion([x*y+z-x*z, x^2-z, 2*x^3-x^2*y*z-1], tdeg(x, y, z), plex(z, y, x)):
+#testBasisConversion([x + y + z, x*y + y*z + z*x, x*y*z-1], grlex(x, y, z), plex(x, y, z)):
+testBasisConversion([x + y + z + u, x*y + y*z + z*u + u*x, x*y*z + y*z*u + z*u*x + u*x*y, x*y*z*u-1], grlex(x, y, z, u), plex(x, y, z, u)):
 # ---------------------------------------------------------------------------
