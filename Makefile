@@ -1,5 +1,5 @@
 all: trim_output
-	maple basisConversion.mpl
+	maple basisConversion2.mpl
 	./trim_output
 	mv out.txt output.txt
 
