@@ -1,0 +1,777 @@
+
+> truncatePolynomial := proc (poly, order_1, order_2)
+> local leading_coeff_1, leading_mon_1, leading_term, 
+> curr_index, polys:
+>  
+> if evalb(type(poly, `+`)) then
+>   leading_coeff_1, leading_mon_1 := LeadingTerm(poly, order_1):
+>   leading_term                   := leading_coeff_1 * leading_mon_1:
+>   curr_index                     := 1:
+
+>   polys := sort([op(poly)], (b, a) -> TestOrder(a, b, order_2)):
+
+>   while evalb(polys[curr_index] <> leading_term) do
+>     curr_index := curr_index + 1:
+>   end do:
+
+>   if curr_index = 1 then
+>     return polys[1]:
+>   else
+>     return add(x, x in polys[1..curr_index]):
+>   end if:
+> else
+>   return poly:
+> end if:
+
+> end proc:
+
+> basisConversion := proc (basis, order_1, order_2)
+> local F, F_t, aux_F_t, num_iter, 
+> F_t_gb, H_t, multipliers, 
+> G, repeat, curr_index, num_elements,
+> tru_g_i:
+
+> lprint("Step 1"):
+> F   := Basis(basis, order_1):
+> F_t := map(v -> truncatePolynomial(v, order_1, order_2), F):
+> lprint("Current F", F):
+> lprint("Current F_t", F_t):
+
+> num_iter := 1:
+
+> while true do
+>   lprint("Iteration ", num_iter):
+>   num_iter := num_iter + 1:
+
+>   lprint("Step 2"):
+>   F_t_gb, multipliers := Basis(F_t, order_2, output=extended):
+>   lprint("Matrix of multipliers M': ", multipliers):
+>   lprint("H (= M' F_t): ", F_t_gb):
+>   
+>   lprint("Step 3"):
+>   H_t := map(v -> truncatePolynomial(v, order_1, order_2), F_t_gb):
+>   lprint("H_t ", H_t):
+
+>   lprint("Step 4"):
+>   G := convert(simplify(
+>   Multiply(convert(multipliers, Matrix), Transpose(convert(F, Matrix)))), list):
+>   lprint("G (= M' * F): ", G):
+
+>   lprint("Step 5"):
+>   repeat       := false:
+>   curr_index   := 1:
+>   num_elements := numelems(H_t):
+>   while curr_index < num_elements do
+>     tru_g_i := truncatePolynomial(G[curr_index], order_1, order_2):
+>     if evalb(tru_g_i <> H_t[curr_index]) then
+>       repeat := true:
+>     end if:
+>     if evalb(G[curr_index] <> 0) then
+>       H_t := subsop(curr_index = tru_g_i, H_t):
+>     end if:
+>     curr_index := curr_index + 1;
+>   end do:
+
+>   #F := InterReduce(G, order_2):
+>   F := G:
+>   if repeat = false then
+>     lprint("Done"):
+>     return F:
+>   else
+>     #F_t := map(v -> truncatePolynomial(v, order_1, order_2), F):
+>     F_t := H_t:
+>     lprint("Current F", F):
+>     lprint("Current F_t", F_t):
+>   end if:
+> end do:
+
+> end proc:
+
+> testBasisConversion := proc (basis, order_1, order_2)
+> local output_1, output_2:
+> lprint("Basis conversion of ", basis, " from ", order_1, " to ", order_2):
+> output_1 := basisConversion(basis, order_1, order_2):
+> output_2 := Basis(basis, order_2):
+> lprint("Result obtained using implemented algorithm ", output_1):
+> lprint("Result obtained using Maple Basis algorithm ", output_2):
+> lprint("Are these results the same? ", evalb(output_1 = output_2)):
+> lprint(""):
+> end proc:
+
+# ---------------------------------------------------------------------------
+# Testing
+#testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(x, y, z)):
+#testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(x, z, y)):
+#testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(y, x, z)):
+#testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(y, z, x)):
+#testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(z, x, y)):
+#testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(z, y, x)):
+#testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], plex(x, y, z), grlex(x, y, z)):
+#testBasisConversion([x*y+z-x*z, x^2-z, 2*x^3-x^2*y*z-1], tdeg(x, y, z), plex(z, y, x)):
+#testBasisConversion([x + y + z, x*y + y*z + z*x, x*y*z-1], grlex(x, y, z), plex(x, y, z)):
+> testBasisConversion([x + y + z + u, x*y + y*z + z*u + u*x, x*y*z + y*z*u + z*u*x + u*x*y, x*y*z*u-1], grlex(x, y, z, u), plex(x, y, z, u)):
+"Basis conversion of ", [x+y+z+u, u*x+u*z+x*y+y*z, u*x*y+u*x*z+u*y*z+x*y*z, u*x*y*z-1], " from ", grlex(x,y,z,u), " to ", plex(x,y,z,
+u)
+"Step 1"
+"Current F", [x+y+z+u, u^2+2*u*y+y^2, -u^3-u^2*y+u*z^2+y*z^2, -u^4-u^3*y+u^3*z+u^2*y*z+u^2*z^2-1, u^3*z^2+u^2*z^3-u-z, u^5+u^4*y-u-y,
+u^4*z^2-2*u^2-u*y+u*z+y*z]
+"Current F_t", [x, y^2, y*z^2, y*z*u^2, u^2*z^3, u^4*y, u^4*z^2-u*y+y*z]
+"Iteration ", 1
+"Step 2"
+memory used=3.5MB, alloc=40.3MB, time=0.04
+"Matrix of multipliers M': ", [[0, 0, 0, -u, 0, 1, u^3], [0, 0, 0, 0, 1, 0, 0], [0, 0, 1, 0, u^2, 0, -z-u], [0, 0, 0, 0, 0, 0, 1], [0
+, 1, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0]]
+"H (= M' F_t): ", [u^7*z^2, u^2*z^3, -u^5*z^2+u^2*y, u^4*z^2-u*y+y*z, y^2, x]
+"Step 3"
+"H_t ", [u^7*z^2, u^2*z^3, -u^5*z^2+u^2*y, u^4*z^2-u*y+y*z, y^2, x]
+"Step 4"
+"G (= M' * F): ", [u^7*z^2+u^4*y-u^3*z^2-y, u^3*z^2+u^2*z^3-u-z, 0, u^4*z^2-2*u^2+(-y+z)*u+y*z, (u+y)^2, x+y+z+u]
+"Step 5"
+"Current F", [u^7*z^2+u^4*y-u^3*z^2-y, u^3*z^2+u^2*z^3-u-z, 0, u^4*z^2-2*u^2+(-y+z)*u+y*z, (u+y)^2, x+y+z+u]
+"Current F_t", [u^7*z^2+u^4*y-y, u^2*z^3, -u^5*z^2+u^2*y, y*z+(-y+z)*u+u^4*z^2, (u+y)^2, x]
+"Iteration ", 2
+"Step 2"
+"Matrix of multipliers M': ", [[-8*u^20*z^5+4*u^16*z^5-4*u^14*z^3-4*u^13*z^4+4*u^10*z^3+4*u^8*z-2*u^7*z^2+2*u+y, 8*u^12*(2*u^7*z-u^3*
+z+1)*z*(u^6*z^2+1), 8*u^22*z^5-8*u^19*z^4-4*u^18*z^5+4*u^16*z^3+8*u^15*z^4-8*u^13*z^2-4*u^12*z^3-4*u^10*z+6*u^9*z^2-2*u^3-u^2*y, -4*(
+2*u^7*z-u^3*z+1)*z*u^7*(u^6*z^2+1), 1, 0], [2*u^7*z^2-u^3*z^2-u+z, -4*u^12*z+2*u^8*z-2*u^5, -2*u^9*z^2+2*u^6*z+u^5*z^2+u^3-2*u^2*z, 2
+*u^7*z-u^3*z+1, 0, 0], [-16*u^25*z^7+8*u^21*z^7-8*u^19*z^5-8*u^18*z^6+8*u^15*z^5+8*u^13*z^3-4*u^12*z^4+4*u^6*z^2+2*u^5*y*z^2-1, 16*u^
+17*(2*u^7*z-u^3*z+1)*z^3*(u^6*z^2+1), 16*u^27*z^7-16*u^24*z^6-8*u^23*z^7+8*u^21*z^5+16*u^20*z^6-16*u^18*z^4-8*u^17*z^5-8*u^15*z^3+12*
+u^14*z^4-4*u^8*z^2-2*u^7*y*z^2+u^2, -8*(2*u^7*z-u^3*z+1)*z^3*u^12*(u^6*z^2+1), 2*u^5*z^2, 0], [0, 0, 0, 0, 0, 1]]
+"H (= M' F_t): ", [u^2, u*z, y, x]
+"Step 3"
+"H_t ", [u^2, u*z, y, x]
+"Step 4"
+"G (= M' * F): ", [16*u^28*z^6+8*u^27*z^7-16*u^26*z^4-16*u^25*z^5-8*u^24*y*z^5-16*u^24*z^6+4*u^23*z^7+40*u^22*z^4+8*u^21*y*z^4+20*u^
+21*z^5+4*u^20*y*z^5+8*u^20*z^6-4*u^19*z^7-16*u^20*z^2-24*u^19*z^3-4*u^18*y*z^3-32*u^18*z^4-8*u^17*y*z^4+4*u^16*z^6+24*u^16*z^2+8*u^15
+*y*z^2+20*u^15*z^3+4*u^14*y*z^3+6*u^14*z^4-4*u^13*z^5-8*u^13*z+4*u^12*y*z-16*u^12*z^2-6*u^11*y*z^2-4*u^11*z^3+2*u^10*z^4+8*u^9*z-2*u^
+8*z^2-u^7*y*z^2+2*u^5*y+u^4*y^2-2*u^4*z^2-u^3*y*z^2+u^2, -4*(u^14*z^3+1/2*u^13*z^4-u^12*z-u^11*z^2-1/2*z^2*(y+2*z)*u^10+1/4*u^9*z^4+3
+/2*u^8*z+1/2*z*(y+3/2*z)*u^7+1/4*z^2*(y+2*z)*u^6+(-1/4*z^4-1/2)*u^5+(1/4*y-z)*u^4-1/2*(y+1/2*z)*z*u^3+1/4*u^2*z^3+1/2*u-1/4*z)*u, (2*
+y^2*z^2-4*z^4)*u^9+(-12*y*z^4-8*z^5)*u^16+(16*y*z^4+40*z^5)*u^20+(8*y*z^5+12*z^6)*u^19+(-8*z^7-16*z^3)*u^18+(8*z^8+48*z^4)*u^21+(-8*z
+^9-48*z^5)*u^24+(8*y*z^7+16*z^8-32*z^4)*u^25+(16*y*z^6+40*z^7)*u^26+8*z^3*(y-4*z)*u^17-8*z^5*(y+8*z)*u^23-16*z^7*(y+2*z)*u^29+32*u^33
+*z^8+16*u^32*z^9-32*u^31*z^6-32*u^30*z^7+8*u^28*z^9+80*u^27*z^6+4*u^15*z^6+16*u^14*z^3-4*u^13*z^4+y-u^4*y+u^3*z^2-2*u^8*y*z^4-2*u^12*
+y*z^4-16*u^22*y*z^6+4*u^10*y*z^2+u^7*z^2, x+y+z+u]
+"Step 5"
+"Current F", [16*u^28*z^6+8*u^27*z^7-16*u^26*z^4-16*u^25*z^5-8*u^24*y*z^5-16*u^24*z^6+4*u^23*z^7+40*u^22*z^4+8*u^21*y*z^4+20*u^21*z^5
++4*u^20*y*z^5+8*u^20*z^6-4*u^19*z^7-16*u^20*z^2-24*u^19*z^3-4*u^18*y*z^3-32*u^18*z^4-8*u^17*y*z^4+4*u^16*z^6+24*u^16*z^2+8*u^15*y*z^2
++20*u^15*z^3+4*u^14*y*z^3+6*u^14*z^4-4*u^13*z^5-8*u^13*z+4*u^12*y*z-16*u^12*z^2-6*u^11*y*z^2-4*u^11*z^3+2*u^10*z^4+8*u^9*z-2*u^8*z^2-
+u^7*y*z^2+2*u^5*y+u^4*y^2-2*u^4*z^2-u^3*y*z^2+u^2, -4*(u^14*z^3+1/2*u^13*z^4-u^12*z-u^11*z^2-1/2*z^2*(y+2*z)*u^10+1/4*u^9*z^4+3/2*u^8
+*z+1/2*z*(y+3/2*z)*u^7+1/4*z^2*(y+2*z)*u^6+(-1/4*z^4-1/2)*u^5+(1/4*y-z)*u^4-1/2*(y+1/2*z)*z*u^3+1/4*u^2*z^3+1/2*u-1/4*z)*u, (2*y^2*z^
+2-4*z^4)*u^9+(-12*y*z^4-8*z^5)*u^16+(16*y*z^4+40*z^5)*u^20+(8*y*z^5+12*z^6)*u^19+(-8*z^7-16*z^3)*u^18+(8*z^8+48*z^4)*u^21+(-8*z^9-48*
+z^5)*u^24+(8*y*z^7+16*z^8-32*z^4)*u^25+(16*y*z^6+40*z^7)*u^26+8*z^3*(y-4*z)*u^17-8*z^5*(y+8*z)*u^23-16*z^7*(y+2*z)*u^29+32*u^33*z^8+
+16*u^32*z^9-32*u^31*z^6-32*u^30*z^7+8*u^28*z^9+80*u^27*z^6+4*u^15*z^6+16*u^14*z^3-4*u^13*z^4+y-u^4*y+u^3*z^2-2*u^8*y*z^4-2*u^12*y*z^4
+-16*u^22*y*z^6+4*u^10*y*z^2+u^7*z^2, x+y+z+u]
+"Current F_t", [8*u^27*z^7-8*u^24*y*z^5+8*u^21*y*z^4+4*u^20*y*z^5-4*u^18*y*z^3-8*u^17*y*z^4+8*u^15*y*z^2+4*u^14*y*z^3+4*u^12*y*z-6*u^
+11*y*z^2-u^7*y*z^2+2*u^5*y+u^4*y^2-u^3*y*z^2, -4*(u^14*z^3+1/2*u^13*z^4-u^12*z-u^11*z^2-1/2*z^2*(y+2*z)*u^10+1/4*u^9*z^4+3/2*u^8*z+1/
+2*z*(y+3/2*z)*u^7+1/4*z^2*(y+2*z)*u^6+(-1/4*z^4-1/2)*u^5+(1/4*y-z)*u^4-1/2*(y+1/2*z)*z*u^3+1/4*u^2*z^3+1/2*u-1/4*z)*u, (2*y^2*z^2-4*z
+^4)*u^9-16*z^7*(y+2*z)*u^29+(8*y*z^7+16*z^8-32*z^4)*u^25+(16*y*z^6+40*z^7)*u^26-16*u^22*y*z^6-8*z^5*(y+8*z)*u^23+(8*y*z^5+12*z^6)*u^
+19+(16*y*z^4+40*z^5)*u^20+(-12*y*z^4-8*z^5)*u^16-2*u^12*y*z^4-2*u^8*y*z^4+8*z^3*(y-4*z)*u^17+4*u^10*y*z^2-u^4*y+y+16*u^32*z^9, x]
+"Iteration ", 3
+"Step 2"
+memory used=17.1MB, alloc=74.3MB, time=0.13
+memory used=55.8MB, alloc=78.3MB, time=0.28
+memory used=92.4MB, alloc=110.3MB, time=0.44
+memory used=138.4MB, alloc=122.9MB, time=0.62
+memory used=175.9MB, alloc=124.5MB, time=0.77
+memory used=203.0MB, alloc=124.5MB, time=0.89
+memory used=265.0MB, alloc=141.8MB, time=1.12
+memory used=317.9MB, alloc=141.8MB, time=1.33
+memory used=370.7MB, alloc=141.8MB, time=1.53
+memory used=424.2MB, alloc=141.8MB, time=1.73
+memory used=474.9MB, alloc=173.8MB, time=1.92
+memory used=525.9MB, alloc=173.8MB, time=2.14
+memory used=567.9MB, alloc=173.8MB, time=2.33
+memory used=605.2MB, alloc=173.8MB, time=2.51
+memory used=637.9MB, alloc=173.8MB, time=2.67
+memory used=697.5MB, alloc=181.8MB, time=2.88
+memory used=740.4MB, alloc=181.8MB, time=3.08
+memory used=786.6MB, alloc=181.8MB, time=3.28
+memory used=830.9MB, alloc=181.8MB, time=3.47
+memory used=876.7MB, alloc=213.8MB, time=3.68
+memory used=923.4MB, alloc=213.8MB, time=3.90
+memory used=966.6MB, alloc=213.8MB, time=4.10
+memory used=1015.0MB, alloc=213.8MB, time=4.31
+memory used=1058.6MB, alloc=213.8MB, time=4.53
+memory used=1102.9MB, alloc=213.8MB, time=4.74
+memory used=1147.2MB, alloc=213.8MB, time=4.95
+memory used=1213.9MB, alloc=245.8MB, time=5.21
+memory used=1275.2MB, alloc=245.8MB, time=5.65
+memory used=1305.0MB, alloc=245.8MB, time=5.87
+memory used=1334.3MB, alloc=245.8MB, time=6.08
+memory used=1364.9MB, alloc=245.8MB, time=6.29
+memory used=1395.3MB, alloc=245.8MB, time=6.52
+memory used=1426.7MB, alloc=245.8MB, time=6.74
+memory used=1456.2MB, alloc=245.8MB, time=6.96
+memory used=1489.3MB, alloc=245.8MB, time=7.20
+memory used=1519.3MB, alloc=245.8MB, time=7.44
+memory used=1553.8MB, alloc=245.8MB, time=7.68
+memory used=1585.0MB, alloc=245.8MB, time=7.92
+memory used=1617.1MB, alloc=245.8MB, time=8.16
+memory used=1654.6MB, alloc=245.8MB, time=8.41
+memory used=1687.9MB, alloc=277.8MB, time=8.67
+memory used=1721.9MB, alloc=277.8MB, time=8.93
+memory used=1756.0MB, alloc=277.8MB, time=9.19
+memory used=1790.3MB, alloc=277.8MB, time=9.45
+memory used=1809.9MB, alloc=277.8MB, time=9.69
+memory used=1877.5MB, alloc=293.8MB, time=9.98
+memory used=1913.1MB, alloc=293.8MB, time=10.23
+memory used=1949.5MB, alloc=293.8MB, time=10.52
+memory used=1978.3MB, alloc=293.8MB, time=10.77
+memory used=2015.7MB, alloc=325.8MB, time=11.04
+memory used=2054.7MB, alloc=325.8MB, time=11.32
+memory used=2093.1MB, alloc=325.8MB, time=11.61
+memory used=2122.5MB, alloc=325.8MB, time=11.87
+memory used=2162.7MB, alloc=325.8MB, time=12.28
+memory used=2191.7MB, alloc=357.8MB, time=12.55
+memory used=2232.5MB, alloc=357.8MB, time=12.85
+memory used=2273.5MB, alloc=357.8MB, time=13.16
+memory used=2303.5MB, alloc=357.8MB, time=13.44
+memory used=2345.4MB, alloc=357.8MB, time=13.75
+memory used=2375.7MB, alloc=389.8MB, time=14.05
+memory used=2405.8MB, alloc=389.8MB, time=14.35
+memory used=2449.1MB, alloc=389.8MB, time=14.68
+memory used=2478.6MB, alloc=389.8MB, time=14.99
+memory used=2522.1MB, alloc=389.8MB, time=15.36
+memory used=2552.6MB, alloc=421.8MB, time=15.68
+memory used=2582.1MB, alloc=421.8MB, time=15.99
+memory used=2620.5MB, alloc=421.8MB, time=16.32
+memory used=2656.5MB, alloc=421.8MB, time=16.66
+memory used=2686.2MB, alloc=421.8MB, time=16.99
+memory used=2715.8MB, alloc=421.8MB, time=17.31
+memory used=2746.0MB, alloc=421.8MB, time=17.63
+memory used=2789.9MB, alloc=453.8MB, time=18.02
+memory used=2814.8MB, alloc=485.8MB, time=18.37
+memory used=2882.9MB, alloc=485.8MB, time=18.77
+memory used=2935.3MB, alloc=485.8MB, time=19.14
+memory used=3015.0MB, alloc=485.8MB, time=20.13
+memory used=3031.3MB, alloc=485.8MB, time=20.46
+memory used=3046.2MB, alloc=485.8MB, time=20.79
+memory used=3061.9MB, alloc=485.8MB, time=21.13
+memory used=3077.9MB, alloc=485.8MB, time=21.49
+memory used=3094.7MB, alloc=485.8MB, time=21.83
+memory used=3111.0MB, alloc=485.8MB, time=22.19
+memory used=3126.4MB, alloc=485.8MB, time=22.54
+memory used=3141.9MB, alloc=485.8MB, time=22.89
+memory used=3157.5MB, alloc=485.8MB, time=23.24
+memory used=3173.7MB, alloc=485.8MB, time=23.60
+memory used=3189.1MB, alloc=485.8MB, time=23.96
+memory used=3204.6MB, alloc=485.8MB, time=24.31
+memory used=3220.0MB, alloc=485.8MB, time=24.66
+memory used=3235.4MB, alloc=485.8MB, time=25.03
+memory used=3250.8MB, alloc=485.8MB, time=25.39
+memory used=3266.3MB, alloc=485.8MB, time=25.75
+memory used=3281.8MB, alloc=485.8MB, time=26.12
+memory used=3297.5MB, alloc=485.8MB, time=26.49
+memory used=3310.1MB, alloc=485.8MB, time=26.84
+memory used=3324.7MB, alloc=485.8MB, time=27.21
+memory used=3340.7MB, alloc=485.8MB, time=27.59
+memory used=3356.5MB, alloc=485.8MB, time=27.96
+memory used=3373.0MB, alloc=485.8MB, time=28.34
+memory used=3389.4MB, alloc=485.8MB, time=28.71
+memory used=3404.9MB, alloc=485.8MB, time=29.10
+memory used=3418.1MB, alloc=485.8MB, time=29.47
+memory used=3431.6MB, alloc=485.8MB, time=29.85
+memory used=3448.0MB, alloc=517.8MB, time=30.24
+memory used=3465.1MB, alloc=517.8MB, time=30.63
+memory used=3481.2MB, alloc=517.8MB, time=31.02
+memory used=3493.1MB, alloc=517.8MB, time=31.40
+memory used=3508.5MB, alloc=517.8MB, time=31.79
+memory used=3526.2MB, alloc=517.8MB, time=32.18
+memory used=3543.3MB, alloc=517.8MB, time=32.57
+memory used=3556.8MB, alloc=517.8MB, time=32.96
+memory used=3570.5MB, alloc=517.8MB, time=33.34
+memory used=3588.8MB, alloc=517.8MB, time=33.96
+memory used=3606.5MB, alloc=517.8MB, time=34.36
+memory used=3615.7MB, alloc=517.8MB, time=34.73
+memory used=3634.0MB, alloc=517.8MB, time=35.14
+memory used=3652.6MB, alloc=517.8MB, time=35.55
+memory used=3661.2MB, alloc=517.8MB, time=35.94
+memory used=3679.7MB, alloc=517.8MB, time=36.35
+memory used=3698.5MB, alloc=517.8MB, time=36.75
+memory used=3706.9MB, alloc=517.8MB, time=37.15
+memory used=3726.0MB, alloc=517.8MB, time=37.56
+memory used=3744.8MB, alloc=517.8MB, time=37.97
+memory used=3753.3MB, alloc=517.8MB, time=38.37
+memory used=3773.2MB, alloc=517.8MB, time=38.81
+memory used=3789.2MB, alloc=517.8MB, time=39.23
+memory used=3800.3MB, alloc=517.8MB, time=39.64
+memory used=3820.1MB, alloc=517.8MB, time=40.07
+memory used=3827.9MB, alloc=517.8MB, time=40.51
+memory used=3847.0MB, alloc=517.8MB, time=40.93
+memory used=3854.4MB, alloc=517.8MB, time=41.34
+memory used=3873.9MB, alloc=549.8MB, time=41.79
+memory used=3880.9MB, alloc=549.8MB, time=42.21
+memory used=3900.6MB, alloc=549.8MB, time=42.66
+memory used=3907.4MB, alloc=549.8MB, time=43.08
+memory used=3927.3MB, alloc=549.8MB, time=43.54
+memory used=3934.0MB, alloc=549.8MB, time=43.97
+memory used=3953.8MB, alloc=549.8MB, time=44.43
+memory used=3960.5MB, alloc=549.8MB, time=44.86
+memory used=3980.6MB, alloc=549.8MB, time=45.33
+memory used=3987.3MB, alloc=549.8MB, time=45.77
+memory used=4007.5MB, alloc=549.8MB, time=46.23
+memory used=4014.4MB, alloc=549.8MB, time=46.69
+memory used=4033.3MB, alloc=581.8MB, time=47.16
+memory used=4041.9MB, alloc=581.8MB, time=47.61
+memory used=4048.1MB, alloc=581.8MB, time=48.05
+memory used=4069.1MB, alloc=581.8MB, time=48.54
+memory used=4074.7MB, alloc=581.8MB, time=48.99
+memory used=4095.3MB, alloc=581.8MB, time=49.49
+memory used=4165.6MB, alloc=645.8MB, time=50.00
+memory used=4175.0MB, alloc=645.8MB, time=50.46
+memory used=4192.5MB, alloc=613.8MB, time=50.95
+memory used=4197.7MB, alloc=613.8MB, time=51.40
+memory used=4215.0MB, alloc=613.8MB, time=51.89
+memory used=4224.3MB, alloc=613.8MB, time=52.37
+memory used=4229.5MB, alloc=613.8MB, time=53.05
+memory used=4243.1MB, alloc=613.8MB, time=53.53
+memory used=4253.9MB, alloc=613.8MB, time=54.01
+memory used=4258.8MB, alloc=613.8MB, time=54.47
+memory used=4271.7MB, alloc=613.8MB, time=54.96
+memory used=4278.1MB, alloc=901.8MB, time=55.46
+memory used=4567.0MB, alloc=933.8MB, time=56.83
+memory used=4907.9MB, alloc=965.8MB, time=58.30
+memory used=5269.2MB, alloc=997.8MB, time=59.87
+memory used=5624.9MB, alloc=1029.8MB, time=61.45
+memory used=5973.0MB, alloc=1061.8MB, time=63.07
+memory used=6305.6MB, alloc=1093.8MB, time=64.65
+memory used=6634.4MB, alloc=1125.8MB, time=66.26
+memory used=6933.8MB, alloc=1157.8MB, time=67.82
+memory used=7221.7MB, alloc=1189.8MB, time=69.46
+memory used=7593.2MB, alloc=1221.8MB, time=71.87
+memory used=8191.5MB, alloc=1317.8MB, time=74.64
+memory used=8674.5MB, alloc=1349.8MB, time=77.33
+memory used=9107.3MB, alloc=1381.8MB, time=79.90
+memory used=9415.7MB, alloc=1413.8MB, time=82.05
+memory used=9671.7MB, alloc=1445.8MB, time=84.07
+memory used=9934.6MB, alloc=1477.8MB, time=86.11
+memory used=10196.7MB, alloc=1509.8MB, time=88.21
+memory used=10462.1MB, alloc=1541.8MB, time=90.33
+memory used=10719.0MB, alloc=1573.8MB, time=92.56
+memory used=10970.2MB, alloc=1605.8MB, time=94.70
+memory used=11263.0MB, alloc=1637.8MB, time=97.00
+memory used=11538.0MB, alloc=1669.8MB, time=99.23
+memory used=11796.0MB, alloc=1701.8MB, time=101.50
+memory used=12056.0MB, alloc=1733.8MB, time=103.76
+memory used=12332.2MB, alloc=1765.8MB, time=106.12
+memory used=12590.9MB, alloc=1797.8MB, time=108.42
+memory used=12737.6MB, alloc=1829.8MB, time=110.46
+memory used=12869.3MB, alloc=1861.8MB, time=112.64
+memory used=13011.9MB, alloc=1893.8MB, time=114.88
+memory used=13147.6MB, alloc=1925.8MB, time=116.97
+memory used=13306.5MB, alloc=1957.8MB, time=119.17
+memory used=13443.8MB, alloc=1989.8MB, time=121.30
+memory used=13585.3MB, alloc=2021.8MB, time=123.72
+memory used=13733.8MB, alloc=2053.8MB, time=126.03
+memory used=13875.7MB, alloc=2085.8MB, time=128.24
+memory used=14039.1MB, alloc=2117.8MB, time=131.42
+memory used=14176.3MB, alloc=2149.8MB, time=133.73
+memory used=14352.4MB, alloc=2181.8MB, time=136.62
+memory used=14492.5MB, alloc=2213.8MB, time=139.42
+memory used=14629.0MB, alloc=2245.8MB, time=141.74
+memory used=14797.3MB, alloc=2277.8MB, time=144.18
+memory used=14935.5MB, alloc=2309.8MB, time=146.46
+memory used=15084.2MB, alloc=2341.8MB, time=148.80
+memory used=15241.8MB, alloc=2373.8MB, time=151.21
+memory used=15384.6MB, alloc=2405.8MB, time=154.18
+memory used=15562.0MB, alloc=2437.8MB, time=156.66
+memory used=15703.1MB, alloc=2469.8MB, time=159.02
+memory used=15830.7MB, alloc=2501.8MB, time=161.42
+memory used=16021.9MB, alloc=2533.8MB, time=163.98
+memory used=16152.2MB, alloc=2565.8MB, time=166.26
+memory used=16284.6MB, alloc=2597.8MB, time=168.54
+memory used=16496.3MB, alloc=2629.8MB, time=172.91
+memory used=16860.2MB, alloc=2661.8MB, time=178.39
+memory used=17239.0MB, alloc=2693.8MB, time=182.70
+memory used=17708.2MB, alloc=2725.8MB, time=187.16
+memory used=18291.6MB, alloc=2757.8MB, time=191.58
+memory used=18827.2MB, alloc=2789.8MB, time=195.84
+memory used=19163.1MB, alloc=2821.8MB, time=199.47
+memory used=19415.2MB, alloc=2853.8MB, time=202.94
+memory used=19662.7MB, alloc=2885.8MB, time=206.44
+memory used=19916.9MB, alloc=2917.8MB, time=209.97
+memory used=20174.4MB, alloc=2949.8MB, time=213.49
+memory used=20439.6MB, alloc=2981.8MB, time=218.60
+memory used=20699.8MB, alloc=3013.8MB, time=223.27
+memory used=20956.8MB, alloc=3045.8MB, time=227.39
+memory used=21190.5MB, alloc=3077.8MB, time=231.04
+memory used=21421.7MB, alloc=3109.8MB, time=234.67
+memory used=21702.2MB, alloc=3141.8MB, time=238.47
+memory used=21951.7MB, alloc=3173.8MB, time=242.19
+memory used=22180.0MB, alloc=3205.8MB, time=245.88
+memory used=22413.8MB, alloc=3237.8MB, time=249.71
+memory used=22637.1MB, alloc=3269.8MB, time=253.45
+memory used=22726.0MB, alloc=3301.8MB, time=256.82
+memory used=23147.0MB, alloc=3589.8MB, time=260.69
+memory used=23292.8MB, alloc=3621.8MB, time=264.35
+memory used=23423.3MB, alloc=3653.8MB, time=267.95
+memory used=23553.3MB, alloc=3685.8MB, time=271.49
+memory used=23684.7MB, alloc=3717.8MB, time=275.07
+memory used=23817.7MB, alloc=3749.8MB, time=278.69
+memory used=23952.0MB, alloc=3781.8MB, time=282.30
+memory used=24087.3MB, alloc=3813.8MB, time=285.93
+memory used=24224.6MB, alloc=3845.8MB, time=289.57
+memory used=24363.2MB, alloc=3877.8MB, time=293.29
+memory used=24503.1MB, alloc=3909.8MB, time=297.06
+memory used=24644.6MB, alloc=3941.8MB, time=300.83
+memory used=24787.3MB, alloc=3973.8MB, time=304.56
+memory used=24931.8MB, alloc=4005.8MB, time=308.32
+memory used=25078.1MB, alloc=4037.8MB, time=312.12
+memory used=25225.3MB, alloc=4069.8MB, time=315.94
+memory used=25374.0MB, alloc=4101.8MB, time=319.79
+memory used=25524.5MB, alloc=4133.8MB, time=323.68
+memory used=25674.6MB, alloc=4165.8MB, time=327.54
+memory used=25826.4MB, alloc=4197.8MB, time=331.38
+memory used=25979.9MB, alloc=4229.8MB, time=335.28
+memory used=26134.5MB, alloc=4261.8MB, time=339.19
+memory used=26290.3MB, alloc=4293.8MB, time=343.15
+memory used=26449.2MB, alloc=4325.8MB, time=347.22
+memory used=26619.3MB, alloc=4357.8MB, time=351.18
+memory used=26778.8MB, alloc=4389.8MB, time=355.16
+memory used=26940.1MB, alloc=4421.8MB, time=359.19
+memory used=27101.2MB, alloc=4453.8MB, time=363.19
+memory used=27262.3MB, alloc=4485.8MB, time=367.28
+memory used=27426.8MB, alloc=4517.8MB, time=371.39
+memory used=27590.8MB, alloc=4549.8MB, time=375.44
+memory used=27756.2MB, alloc=4581.8MB, time=379.53
+memory used=27923.5MB, alloc=4613.8MB, time=383.69
+memory used=28090.5MB, alloc=4645.8MB, time=387.89
+memory used=28260.0MB, alloc=4677.8MB, time=392.05
+memory used=28430.0MB, alloc=4709.8MB, time=396.26
+memory used=28613.0MB, alloc=4741.8MB, time=400.47
+memory used=28783.4MB, alloc=4773.8MB, time=404.68
+memory used=28955.0MB, alloc=4805.8MB, time=408.97
+memory used=29125.9MB, alloc=4837.8MB, time=413.24
+memory used=29298.0MB, alloc=4869.8MB, time=417.46
+memory used=29471.7MB, alloc=4901.8MB, time=421.79
+memory used=29645.2MB, alloc=4933.8MB, time=426.17
+memory used=29819.3MB, alloc=4965.8MB, time=430.48
+memory used=29993.9MB, alloc=4997.8MB, time=434.82
+memory used=30168.6MB, alloc=5029.8MB, time=439.15
+memory used=30345.0MB, alloc=5061.8MB, time=443.63
+memory used=30520.7MB, alloc=5093.8MB, time=448.13
+memory used=30698.2MB, alloc=5125.8MB, time=452.54
+memory used=30874.6MB, alloc=5157.8MB, time=457.00
+memory used=31052.5MB, alloc=5189.8MB, time=461.43
+memory used=31231.5MB, alloc=5221.8MB, time=465.89
+memory used=31410.1MB, alloc=5253.8MB, time=470.35
+memory used=31589.1MB, alloc=5285.8MB, time=474.85
+memory used=31766.3MB, alloc=5317.8MB, time=479.34
+memory used=31944.6MB, alloc=5349.8MB, time=483.81
+memory used=32154.2MB, alloc=5381.8MB, time=488.36
+memory used=32334.7MB, alloc=5413.8MB, time=492.72
+memory used=32525.0MB, alloc=5445.8MB, time=497.10
+memory used=32820.9MB, alloc=5477.8MB, time=502.69
+memory used=33127.3MB, alloc=5509.8MB, time=508.39
+memory used=33424.4MB, alloc=5541.8MB, time=514.01
+memory used=33770.9MB, alloc=5573.8MB, time=519.89
+memory used=34166.4MB, alloc=5605.8MB, time=525.95
+memory used=34646.1MB, alloc=5637.8MB, time=532.34
+memory used=35166.2MB, alloc=5669.8MB, time=538.82
+memory used=35629.8MB, alloc=5701.8MB, time=545.15
+memory used=36082.1MB, alloc=5733.8MB, time=551.50
+memory used=36369.7MB, alloc=5765.8MB, time=557.33
+memory used=36625.7MB, alloc=5797.8MB, time=563.07
+memory used=36888.7MB, alloc=5829.8MB, time=568.88
+memory used=37106.8MB, alloc=5861.8MB, time=574.58
+memory used=37319.1MB, alloc=5893.8MB, time=580.31
+memory used=37540.1MB, alloc=5925.8MB, time=586.12
+memory used=37759.0MB, alloc=5957.8MB, time=591.83
+memory used=37955.4MB, alloc=5989.8MB, time=597.71
+memory used=38151.2MB, alloc=6021.8MB, time=603.49
+memory used=38364.0MB, alloc=6053.8MB, time=609.33
+memory used=38565.9MB, alloc=6085.8MB, time=615.18
+memory used=38783.1MB, alloc=6117.8MB, time=621.10
+memory used=38981.2MB, alloc=6149.8MB, time=627.00
+memory used=39193.6MB, alloc=6181.8MB, time=632.97
+memory used=39397.6MB, alloc=6213.8MB, time=638.96
+memory used=39622.7MB, alloc=6245.8MB, time=645.05
+memory used=39839.5MB, alloc=6277.8MB, time=651.14
+memory used=40068.1MB, alloc=6309.8MB, time=657.27
+memory used=40272.5MB, alloc=6341.8MB, time=663.40
+memory used=40517.3MB, alloc=6373.8MB, time=669.57
+memory used=40698.8MB, alloc=6405.8MB, time=675.62
+memory used=40845.0MB, alloc=6437.8MB, time=681.75
+memory used=40999.5MB, alloc=6469.8MB, time=687.82
+memory used=41169.6MB, alloc=6501.8MB, time=694.14
+memory used=41321.2MB, alloc=6533.8MB, time=700.09
+memory used=41425.3MB, alloc=6565.8MB, time=706.08
+memory used=41501.8MB, alloc=6597.8MB, time=712.06
+memory used=41633.7MB, alloc=6629.8MB, time=718.15
+memory used=41788.8MB, alloc=6661.8MB, time=724.38
+memory used=41907.9MB, alloc=6693.8MB, time=730.57
+memory used=42066.9MB, alloc=6725.8MB, time=736.75
+memory used=42182.4MB, alloc=6757.8MB, time=742.85
+memory used=42280.6MB, alloc=6789.8MB, time=749.08
+memory used=42462.3MB, alloc=6821.8MB, time=755.35
+memory used=42626.5MB, alloc=6853.8MB, time=761.59
+memory used=42744.5MB, alloc=6885.8MB, time=767.79
+memory used=42861.6MB, alloc=6917.8MB, time=774.05
+memory used=43029.0MB, alloc=6949.8MB, time=780.36
+memory used=43150.2MB, alloc=6981.8MB, time=786.78
+memory used=43268.6MB, alloc=7013.8MB, time=793.20
+memory used=43440.9MB, alloc=7045.8MB, time=799.55
+memory used=43564.6MB, alloc=7077.8MB, time=805.90
+memory used=43683.6MB, alloc=7109.8MB, time=812.30
+memory used=43859.3MB, alloc=7141.8MB, time=818.75
+memory used=43985.4MB, alloc=7173.8MB, time=825.15
+memory used=44106.0MB, alloc=7205.8MB, time=831.56
+memory used=44283.7MB, alloc=7237.8MB, time=838.03
+memory used=44409.2MB, alloc=7269.8MB, time=844.50
+memory used=44576.9MB, alloc=7301.8MB, time=850.99
+memory used=44699.1MB, alloc=7333.8MB, time=857.47
+memory used=44882.0MB, alloc=7365.8MB, time=864.09
+memory used=45012.8MB, alloc=7397.8MB, time=870.60
+memory used=45146.6MB, alloc=7429.8MB, time=877.19
+memory used=45347.7MB, alloc=7461.8MB, time=883.79
+memory used=45491.4MB, alloc=7493.8MB, time=890.46
+memory used=45626.5MB, alloc=7525.8MB, time=897.12
+memory used=45839.7MB, alloc=7557.8MB, time=903.72
+memory used=45983.5MB, alloc=7589.8MB, time=910.31
+memory used=46119.4MB, alloc=7621.8MB, time=916.97
+memory used=46328.7MB, alloc=7653.8MB, time=923.74
+memory used=46481.9MB, alloc=7685.8MB, time=930.37
+memory used=46619.3MB, alloc=7717.8MB, time=937.04
+memory used=46836.8MB, alloc=7749.8MB, time=943.83
+memory used=46994.8MB, alloc=7781.8MB, time=950.75
+memory used=47134.8MB, alloc=7813.8MB, time=957.59
+memory used=47353.0MB, alloc=7845.8MB, time=964.39
+memory used=47513.9MB, alloc=7877.8MB, time=971.21
+memory used=47656.4MB, alloc=7909.8MB, time=978.10
+memory used=47877.6MB, alloc=7941.8MB, time=985.03
+memory used=48029.4MB, alloc=7973.8MB, time=992.02
+memory used=48173.3MB, alloc=8005.8MB, time=999.00
+memory used=48392.3MB, alloc=8037.8MB, time=1005.95
+memory used=48554.0MB, alloc=8069.8MB, time=1012.90
+memory used=48702.5MB, alloc=8101.8MB, time=1019.92
+memory used=48923.6MB, alloc=8133.8MB, time=1026.99
+memory used=49091.1MB, alloc=8165.8MB, time=1034.09
+memory used=49243.6MB, alloc=8197.8MB, time=1041.18
+memory used=49474.2MB, alloc=8229.8MB, time=1048.31
+memory used=49637.9MB, alloc=8261.8MB, time=1055.34
+memory used=49790.1MB, alloc=8293.8MB, time=1062.37
+memory used=50013.8MB, alloc=8325.8MB, time=1069.54
+memory used=50187.3MB, alloc=8357.8MB, time=1076.66
+memory used=50346.4MB, alloc=8389.8MB, time=1083.84
+memory used=50576.7MB, alloc=8421.8MB, time=1091.04
+memory used=50748.2MB, alloc=8453.8MB, time=1098.25
+memory used=50906.1MB, alloc=8485.8MB, time=1105.46
+memory used=51133.6MB, alloc=8517.8MB, time=1112.78
+memory used=51305.7MB, alloc=8549.8MB, time=1120.05
+memory used=51463.8MB, alloc=8581.8MB, time=1127.36
+memory used=51692.8MB, alloc=8613.8MB, time=1134.74
+memory used=51862.9MB, alloc=8645.8MB, time=1142.11
+memory used=52020.6MB, alloc=8677.8MB, time=1149.46
+memory used=52249.5MB, alloc=8709.8MB, time=1156.91
+memory used=52426.0MB, alloc=8741.8MB, time=1164.35
+memory used=52574.8MB, alloc=8773.8MB, time=1171.74
+memory used=52738.1MB, alloc=8805.8MB, time=1179.22
+memory used=52889.8MB, alloc=8837.8MB, time=1186.77
+memory used=53134.7MB, alloc=8869.8MB, time=1194.36
+memory used=53308.0MB, alloc=8901.8MB, time=1201.91
+memory used=53469.1MB, alloc=8933.8MB, time=1209.62
+memory used=53706.4MB, alloc=8965.8MB, time=1217.26
+memory used=53883.4MB, alloc=8997.8MB, time=1224.87
+memory used=54046.6MB, alloc=9029.8MB, time=1232.48
+memory used=54279.7MB, alloc=9061.8MB, time=1240.16
+memory used=54460.8MB, alloc=9093.8MB, time=1247.82
+memory used=54625.6MB, alloc=9125.8MB, time=1255.53
+memory used=54850.3MB, alloc=9157.8MB, time=1263.18
+memory used=55027.2MB, alloc=9189.8MB, time=1270.82
+memory used=55172.1MB, alloc=9221.8MB, time=1278.57
+memory used=55346.9MB, alloc=9253.8MB, time=1286.31
+memory used=55502.9MB, alloc=9285.8MB, time=1294.14
+memory used=55745.0MB, alloc=9317.8MB, time=1301.98
+memory used=55922.0MB, alloc=9349.8MB, time=1309.79
+memory used=56085.9MB, alloc=9381.8MB, time=1317.65
+memory used=56327.5MB, alloc=9413.8MB, time=1325.43
+memory used=56505.8MB, alloc=9445.8MB, time=1333.25
+memory used=56669.9MB, alloc=9477.8MB, time=1341.11
+memory used=56906.9MB, alloc=9509.8MB, time=1349.05
+memory used=57082.9MB, alloc=9541.8MB, time=1357.00
+memory used=57228.1MB, alloc=9573.8MB, time=1364.87
+memory used=57397.9MB, alloc=9605.8MB, time=1372.82
+memory used=57552.8MB, alloc=9637.8MB, time=1380.71
+memory used=57781.9MB, alloc=9669.8MB, time=1388.77
+memory used=57959.6MB, alloc=9701.8MB, time=1396.72
+memory used=58122.9MB, alloc=9733.8MB, time=1404.79
+memory used=58343.8MB, alloc=9765.8MB, time=1412.94
+memory used=58566.8MB, alloc=9797.8MB, time=1421.02
+memory used=58714.4MB, alloc=9829.8MB, time=1428.92
+memory used=58885.1MB, alloc=9861.8MB, time=1436.89
+memory used=59023.9MB, alloc=9893.8MB, time=1444.93
+memory used=59158.7MB, alloc=9925.8MB, time=1452.89
+memory used=59369.9MB, alloc=9957.8MB, time=1461.17
+memory used=59612.5MB, alloc=9989.8MB, time=1469.08
+memory used=59942.9MB, alloc=10021.8MB, time=1477.35
+memory used=60267.2MB, alloc=10053.8MB, time=1485.61
+memory used=60553.7MB, alloc=10085.8MB, time=1493.85
+memory used=61144.0MB, alloc=10629.8MB, time=1502.09
+memory used=61434.6MB, alloc=10661.8MB, time=1509.95
+memory used=61742.0MB, alloc=10693.8MB, time=1517.94
+memory used=62074.2MB, alloc=10725.8MB, time=1525.67
+memory used=62502.2MB, alloc=10757.8MB, time=1552.44
+memory used=62889.0MB, alloc=10789.8MB, time=1564.85
+memory used=63248.3MB, alloc=10821.8MB, time=1573.84
+memory used=63448.4MB, alloc=10853.8MB, time=1596.15
+memory used=64087.0MB, alloc=10885.8MB, time=1609.44
+memory used=64445.0MB, alloc=10917.8MB, time=1637.29
+memory used=65076.3MB, alloc=10693.8MB, time=1647.96
+memory used=66044.5MB, alloc=10725.8MB, time=1657.96
+memory used=66661.0MB, alloc=10757.8MB, time=1667.33
+memory used=67229.7MB, alloc=10789.8MB, time=1676.42
+memory used=67700.3MB, alloc=10821.8MB, time=1685.70
+memory used=68039.5MB, alloc=10853.8MB, time=1694.02
+memory used=68327.1MB, alloc=10885.8MB, time=1702.46
+memory used=68541.9MB, alloc=10917.8MB, time=1710.66
+memory used=68832.1MB, alloc=10949.8MB, time=1719.24
+memory used=69049.3MB, alloc=10981.8MB, time=1727.31
+memory used=69356.6MB, alloc=11013.8MB, time=1735.97
+memory used=69555.5MB, alloc=11045.8MB, time=1743.96
+memory used=69883.7MB, alloc=11077.8MB, time=1752.69
+memory used=70069.2MB, alloc=11109.8MB, time=1760.78
+memory used=70110.4MB, alloc=11141.8MB, time=1768.66
+memory used=70439.8MB, alloc=11173.8MB, time=1777.33
+memory used=70614.5MB, alloc=11205.8MB, time=1785.71
+memory used=70652.7MB, alloc=11237.8MB, time=1793.56
+memory used=70704.0MB, alloc=11269.8MB, time=1801.52
+memory used=71020.5MB, alloc=11301.8MB, time=1810.28
+memory used=71200.5MB, alloc=11333.8MB, time=1818.35
+memory used=71262.3MB, alloc=11365.8MB, time=1826.30
+memory used=71580.7MB, alloc=11397.8MB, time=1835.07
+memory used=71757.7MB, alloc=11429.8MB, time=1843.14
+memory used=71810.9MB, alloc=11461.8MB, time=1851.04
+memory used=72133.2MB, alloc=11493.8MB, time=1859.87
+memory used=72315.0MB, alloc=11525.8MB, time=1867.93
+memory used=72360.4MB, alloc=11557.8MB, time=1875.91
+memory used=72412.1MB, alloc=11589.8MB, time=1883.94
+memory used=72726.2MB, alloc=11621.8MB, time=1892.79
+memory used=72896.7MB, alloc=11653.8MB, time=1900.94
+memory used=72952.9MB, alloc=11685.8MB, time=1908.97
+memory used=73270.1MB, alloc=11717.8MB, time=1917.67
+memory used=73438.4MB, alloc=11749.8MB, time=1925.85
+memory used=73492.9MB, alloc=11781.8MB, time=1933.88
+memory used=73811.4MB, alloc=11813.8MB, time=1942.76
+memory used=73995.0MB, alloc=11845.8MB, time=1951.00
+memory used=74049.5MB, alloc=11877.8MB, time=1959.12
+memory used=74369.7MB, alloc=11909.8MB, time=1968.10
+memory used=74558.2MB, alloc=11941.8MB, time=1976.37
+memory used=74606.6MB, alloc=11973.8MB, time=1984.41
+memory used=74653.7MB, alloc=12005.8MB, time=1992.59
+memory used=74966.8MB, alloc=12037.8MB, time=2001.53
+memory used=75139.6MB, alloc=12069.8MB, time=2009.76
+memory used=75196.5MB, alloc=12101.8MB, time=2017.94
+memory used=75512.4MB, alloc=12133.8MB, time=2026.86
+memory used=75687.6MB, alloc=12165.8MB, time=2035.14
+memory used=75744.3MB, alloc=12197.8MB, time=2043.28
+memory used=76061.5MB, alloc=12229.8MB, time=2052.57
+memory used=76236.6MB, alloc=12261.8MB, time=2060.93
+memory used=76285.8MB, alloc=12293.8MB, time=2069.07
+memory used=76605.5MB, alloc=12325.8MB, time=2078.14
+memory used=76781.0MB, alloc=12357.8MB, time=2086.56
+memory used=76826.8MB, alloc=12389.8MB, time=2094.82
+memory used=76872.6MB, alloc=12421.8MB, time=2103.08
+memory used=77183.0MB, alloc=12453.8MB, time=2112.11
+memory used=77360.9MB, alloc=12485.8MB, time=2120.46
+memory used=77419.8MB, alloc=12517.8MB, time=2128.71
+memory used=77730.6MB, alloc=12549.8MB, time=2137.79
+memory used=77905.8MB, alloc=12581.8MB, time=2146.23
+memory used=77961.7MB, alloc=12613.8MB, time=2154.50
+memory used=78275.8MB, alloc=12645.8MB, time=2163.45
+memory used=78449.1MB, alloc=12677.8MB, time=2171.92
+memory used=78498.3MB, alloc=12709.8MB, time=2180.20
+memory used=78814.3MB, alloc=12741.8MB, time=2189.38
+memory used=78988.5MB, alloc=12773.8MB, time=2197.87
+memory used=79034.2MB, alloc=12805.8MB, time=2206.17
+memory used=79080.0MB, alloc=12837.8MB, time=2214.54
+memory used=79387.1MB, alloc=12869.8MB, time=2223.60
+memory used=79552.2MB, alloc=12901.8MB, time=2232.01
+memory used=79607.4MB, alloc=12933.8MB, time=2240.31
+memory used=79916.5MB, alloc=12965.8MB, time=2249.49
+memory used=80080.8MB, alloc=12997.8MB, time=2258.03
+memory used=80133.4MB, alloc=13029.8MB, time=2266.40
+memory used=80442.7MB, alloc=13061.8MB, time=2275.74
+memory used=80621.0MB, alloc=13093.8MB, time=2284.34
+memory used=80671.8MB, alloc=13125.8MB, time=2292.72
+memory used=80985.1MB, alloc=13157.8MB, time=2302.09
+memory used=81191.0MB, alloc=13189.8MB, time=2311.11
+memory used=81232.6MB, alloc=13221.8MB, time=2319.41
+memory used=81544.1MB, alloc=13253.8MB, time=2328.54
+memory used=81705.4MB, alloc=13285.8MB, time=2337.17
+memory used=81742.4MB, alloc=13317.8MB, time=2345.55
+memory used=81785.3MB, alloc=13349.8MB, time=2354.13
+memory used=82089.0MB, alloc=13381.8MB, time=2363.44
+memory used=82263.1MB, alloc=13413.8MB, time=2372.09
+memory used=82323.7MB, alloc=13445.8MB, time=2380.57
+memory used=82627.6MB, alloc=13477.8MB, time=2389.89
+memory used=82797.1MB, alloc=13509.8MB, time=2398.56
+memory used=82848.9MB, alloc=13541.8MB, time=2407.09
+memory used=83154.7MB, alloc=13573.8MB, time=2416.49
+memory used=83327.8MB, alloc=13605.8MB, time=2425.22
+memory used=83378.0MB, alloc=13637.8MB, time=2433.77
+memory used=83684.7MB, alloc=13669.8MB, time=2443.16
+memory used=83859.2MB, alloc=13701.8MB, time=2451.81
+memory used=83909.9MB, alloc=13733.8MB, time=2460.37
+memory used=83955.0MB, alloc=13765.8MB, time=2469.02
+memory used=84252.6MB, alloc=13797.8MB, time=2478.41
+memory used=84418.8MB, alloc=13829.8MB, time=2487.19
+memory used=84473.5MB, alloc=13861.8MB, time=2495.79
+memory used=84772.4MB, alloc=13893.8MB, time=2505.10
+memory used=84943.8MB, alloc=13925.8MB, time=2513.93
+memory used=85000.5MB, alloc=13957.8MB, time=2522.60
+memory used=85298.8MB, alloc=13989.8MB, time=2532.06
+memory used=85461.8MB, alloc=14021.8MB, time=2541.03
+memory used=85511.9MB, alloc=14053.8MB, time=2549.56
+memory used=85812.1MB, alloc=14085.8MB, time=2559.27
+memory used=85979.6MB, alloc=14117.8MB, time=2568.22
+memory used=86027.6MB, alloc=14149.8MB, time=2577.00
+memory used=86329.4MB, alloc=14181.8MB, time=2586.46
+memory used=86502.3MB, alloc=14213.8MB, time=2595.34
+memory used=86553.9MB, alloc=14245.8MB, time=2604.09
+memory used=86598.3MB, alloc=14277.8MB, time=2612.95
+memory used=86890.3MB, alloc=14309.8MB, time=2622.41
+memory used=87059.8MB, alloc=14341.8MB, time=2631.41
+memory used=87118.7MB, alloc=14373.8MB, time=2640.62
+memory used=87411.8MB, alloc=14405.8MB, time=2650.13
+memory used=87577.3MB, alloc=14437.8MB, time=2659.05
+memory used=87638.0MB, alloc=14469.8MB, time=2667.95
+memory used=87931.6MB, alloc=14501.8MB, time=2677.55
+memory used=88104.6MB, alloc=14533.8MB, time=2686.58
+memory used=88163.4MB, alloc=14565.8MB, time=2695.44
+memory used=88457.0MB, alloc=14597.8MB, time=2705.05
+memory used=88630.9MB, alloc=14629.8MB, time=2713.98
+memory used=88688.4MB, alloc=14661.8MB, time=2722.71
+memory used=88981.6MB, alloc=14693.8MB, time=2732.35
+memory used=89164.8MB, alloc=14725.8MB, time=2741.39
+memory used=89230.2MB, alloc=14757.8MB, time=2750.29
+memory used=89523.6MB, alloc=14789.8MB, time=2759.94
+memory used=89692.6MB, alloc=14821.8MB, time=2769.09
+memory used=89753.6MB, alloc=14853.8MB, time=2778.08
+memory used=89797.0MB, alloc=14885.8MB, time=2787.05
+memory used=90081.7MB, alloc=14917.8MB, time=2796.77
+memory used=90265.7MB, alloc=14949.8MB, time=2805.84
+memory used=90332.8MB, alloc=14981.8MB, time=2815.07
+memory used=90615.4MB, alloc=15013.8MB, time=2824.69
+memory used=90787.4MB, alloc=15045.8MB, time=2833.70
+memory used=90851.1MB, alloc=15077.8MB, time=2842.66
+memory used=91134.4MB, alloc=15109.8MB, time=2852.42
+memory used=91309.4MB, alloc=15141.8MB, time=2862.45
+memory used=91371.7MB, alloc=15173.8MB, time=2876.67
+memory used=91655.4MB, alloc=15205.8MB, time=2891.28
+memory used=91827.3MB, alloc=15237.8MB, time=2906.38
+memory used=91886.2MB, alloc=15269.8MB, time=2927.30
+memory used=92169.2MB, alloc=15301.8MB, time=2947.61
+memory used=92341.9MB, alloc=15333.8MB, time=2963.72
+memory used=92402.7MB, alloc=15365.8MB, time=2989.27
+memory used=92686.0MB, alloc=15397.8MB, time=3015.53
+memory used=92857.3MB, alloc=15429.8MB, time=3040.80
+memory used=92921.5MB, alloc=15461.8MB, time=3069.88
+memory used=93203.7MB, alloc=15493.8MB, time=3100.18
+memory used=93360.3MB, alloc=15525.8MB, time=3129.49
+memory used=93408.9MB, alloc=15557.8MB, time=3158.41
+memory used=93450.2MB, alloc=15589.8MB, time=3185.46
+memory used=93723.8MB, alloc=15621.8MB, time=3221.91
+memory used=93880.4MB, alloc=15653.8MB, time=3252.69
+Interrupted
+# ---------------------------------------------------------------------------
+> quit
+memory used=93905.1MB, alloc=15653.8MB, time=3252.71

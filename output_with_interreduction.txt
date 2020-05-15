@@ -1,0 +1,33 @@
+"Basis conversion of ", [x+y+z+u, u*x+u*z+x*y+y*z, u*x*y+u*x*z+u*y*z+x*y*z, u*x*y*z-1], " from ", grlex(x,y,z,u), " to ", plex(x,y,z,
+u)
+"Step 1"
+"Current F", [x+y+z+u, u^2+2*u*y+y^2, -u^3-u^2*y+u*z^2+y*z^2, -u^4-u^3*y+u^3*z+u^2*y*z+u^2*z^2-1, u^3*z^2+u^2*z^3-u-z, u^5+u^4*y-u-y,
+u^4*z^2-2*u^2-u*y+u*z+y*z]
+"Current F_t", [x, y^2, y*z^2, y*z*u^2, u^2*z^3, u^4*y, u^4*z^2-u*y+y*z]
+"Iteration ", 1
+"Step 2"
+memory used=3.5MB, alloc=40.3MB, time=0.21
+"Matrix of multipliers M': ", [[0, 0, 0, -u, 0, 1, u^3], [0, 0, 0, 0, 1, 0, 0], [0, 0, 1, 0, u^2, 0, -z-u], [0, 0, 0, 0, 0, 0, 1], [0
+, 1, 0, 0, 0, 0, 0], [1, 0, 0, 0, 0, 0, 0]]
+"H (= M' F_t): ", [u^7*z^2, u^2*z^3, -u^5*z^2+u^2*y, u^4*z^2-u*y+y*z, y^2, x]
+"Step 3"
+"H_t ", [u^7*z^2, u^2*z^3, -u^5*z^2+u^2*y, u^4*z^2-u*y+y*z, y^2, x]
+"Step 4"
+"G (= M' * F): ", [u^7*z^2+u^4*y-u^3*z^2-y, u^3*z^2+u^2*z^3-u-z, 0, u^4*z^2-2*u^2+(-y+z)*u+y*z, (u+y)^2, x+y+z+u]
+"Step 5"
+"Current F", [u^3*z^2+u^2*z^3-u-z, u^7*z^2+u^4*y-u^3*z^2-y, u^4*z^2-2*u^2-u*y+u*z+y*z, u^2+2*u*y+y^2, x+y+z+u]
+"Current F_t", [u^7*z^2+u^4*y-y, u^2*z^3, -u^5*z^2+u^2*y, y*z+(-y+z)*u+u^4*z^2, (u+y)^2, x]
+"Iteration ", 2
+"Step 2"
+"Matrix of multipliers M': ", [[-8*u^20*z^5+4*u^16*z^5-4*u^14*z^3-4*u^13*z^4+4*u^10*z^3+4*u^8*z-2*u^7*z^2+2*u+y, 8*u^12*(2*u^7*z-u^3*
+z+1)*z*(u^6*z^2+1), 8*u^22*z^5-8*u^19*z^4-4*u^18*z^5+4*u^16*z^3+8*u^15*z^4-8*u^13*z^2-4*u^12*z^3-4*u^10*z+6*u^9*z^2-2*u^3-u^2*y, -4*(
+2*u^7*z-u^3*z+1)*z*u^7*(u^6*z^2+1), 1, 0], [2*u^7*z^2-u^3*z^2-u+z, -4*u^12*z+2*u^8*z-2*u^5, -2*u^9*z^2+2*u^6*z+u^5*z^2+u^3-2*u^2*z, 2
+*u^7*z-u^3*z+1, 0, 0], [-16*u^25*z^7+8*u^21*z^7-8*u^19*z^5-8*u^18*z^6+8*u^15*z^5+8*u^13*z^3-4*u^12*z^4+4*u^6*z^2+2*u^5*y*z^2-1, 16*u^
+17*(2*u^7*z-u^3*z+1)*z^3*(u^6*z^2+1), 16*u^27*z^7-16*u^24*z^6-8*u^23*z^7+8*u^21*z^5+16*u^20*z^6-16*u^18*z^4-8*u^17*z^5-8*u^15*z^3+12*
+u^14*z^4-4*u^8*z^2-2*u^7*y*z^2+u^2, -8*(2*u^7*z-u^3*z+1)*z^3*u^12*(u^6*z^2+1), 2*u^5*z^2, 0], [0, 0, 0, 0, 0, 1]]
+"H (= M' F_t): ", [u^2, u*z, y, x]
+"Step 3"
+"H_t ", [u^2, u*z, y, x]
+"Step 4"
+Error, (in LinearAlgebra:-Multiply) first matrix column dimension (6) <> second matrix row dimension (5) |basisConversion2.mpl:62|
+memory used=9.1MB, alloc=41.3MB, time=0.39

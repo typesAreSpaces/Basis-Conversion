@@ -8,22 +8,27 @@ writeto("output.txt"):
 truncatePolynomial := proc (poly, order_1, order_2)
 local leading_coeff_1, leading_mon_1, leading_term, 
 curr_index, polys:
+ 
+if evalb(type(poly, `+`)) then
+  leading_coeff_1, leading_mon_1 := LeadingTerm(poly, order_1):
+  leading_term                   := leading_coeff_1 * leading_mon_1:
+  curr_index                     := 1:
 
-leading_coeff_1, leading_mon_1 := LeadingTerm(poly, order_1):
-leading_term                   := leading_coeff_1 * leading_mon_1:
-curr_index                     := 1:
+  polys := sort([op(poly)], (b, a) -> TestOrder(a, b, order_2)):
 
-polys := sort([op(poly)], (b, a) -> TestOrder(a, b, order_2)):
+  while evalb(polys[curr_index] <> leading_term) do
+    curr_index := curr_index + 1:
+  end do:
 
-while evalb(polys[curr_index] <> leading_term) do
-  curr_index := curr_index + 1:
-end do:
-
-if curr_index = 1 then
-  return polys[1]:
+  if curr_index = 1 then
+    return polys[1]:
+  else
+    return add(x, x in polys[1..curr_index]):
+  end if:
 else
-  return add(x, x in polys[1..curr_index]):
+  return poly:
 end if:
+
 end proc:
 
 basisConversion := proc (basis, order_1, order_2)

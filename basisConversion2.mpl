@@ -1,35 +1,41 @@
 with(LinearAlgebra, 
   Multiply, Transpose):
 with(Groebner,      
-  Basis, InterReduce, LeadingTerm, LeadingMonomial, TestOrder): 
+  Basis, InterReduce, Reduce, LeadingTerm, LeadingMonomial, TestOrder): 
 
 writeto("output.txt"):
 
 truncatePolynomial := proc (poly, order_1, order_2)
 local leading_coeff_1, leading_mon_1, leading_term, 
 curr_index, polys:
+ 
+if evalb(type(poly, `+`)) then
+  leading_coeff_1, leading_mon_1 := LeadingTerm(poly, order_1):
+  leading_term                   := leading_coeff_1 * leading_mon_1:
+  curr_index                     := 1:
 
-leading_coeff_1, leading_mon_1 := LeadingTerm(poly, order_1):
-leading_term                   := leading_coeff_1 * leading_mon_1:
-curr_index                     := 1:
+  polys := sort([op(poly)], (b, a) -> TestOrder(a, b, order_2)):
 
-polys := sort([op(poly)], (b, a) -> TestOrder(a, b, order_2)):
+  while evalb(polys[curr_index] <> leading_term) do
+    curr_index := curr_index + 1:
+  end do:
 
-while evalb(polys[curr_index] <> leading_term) do
-  curr_index := curr_index + 1:
-end do:
-
-if curr_index = 1 then
-  return polys[1]:
+  if curr_index = 1 then
+    return polys[1]:
+  else
+    return add(x, x in polys[1..curr_index]):
+  end if:
 else
-  return add(x, x in polys[1..curr_index]):
+  return poly:
 end if:
+
 end proc:
 
 basisConversion := proc (basis, order_1, order_2)
-local F, F_t, num_iter, 
-F_t_gb, multipliers, 
-G, repeat, curr_index, num_elements:
+local F, F_t, aux_F_t, num_iter, 
+F_t_gb, H_t, multipliers, 
+G, repeat, curr_index, num_elements,
+tru_g_i:
 
 lprint("Step 1"):
 F   := Basis(basis, order_1):
@@ -43,50 +49,44 @@ while true do
   lprint("Iteration ", num_iter):
   num_iter := num_iter + 1:
 
-  lprint("Step 3 & 4"):
+  lprint("Step 2"):
   F_t_gb, multipliers := Basis(F_t, order_2, output=extended):
   lprint("Matrix of multipliers M': ", multipliers):
   lprint("H (= M' F_t): ", F_t_gb):
   
-  lprint("Step 5"):
+  lprint("Step 3"):
+  H_t := map(v -> truncatePolynomial(v, order_1, order_2), F_t_gb):
+  lprint("H_t ", H_t):
+
+  lprint("Step 4"):
   G := convert(simplify(
   Multiply(convert(multipliers, Matrix), Transpose(convert(F, Matrix)))), list):
   lprint("G (= M' * F): ", G):
 
-  lprint("Step 5.5"):
-  num_elements := numelems(G):
-  curr_index   := 1:
-  while curr_index < num_elements do
-    if evalb(G[curr_index] = 0) then
-      G := subsop(curr_index = F_t_gb[curr_index], G):
-    end if:
-    curr_index := curr_index + 1:
-  end do:
-  lprint("G (after replacing zero elements by correspondent element in H)", G):
-
-  lprint("Step 6 and 7"):
+  lprint("Step 5"):
   repeat       := false:
   curr_index   := 1:
-  num_elements := numelems(F_t_gb):
+  num_elements := numelems(H_t):
   while curr_index < num_elements do
-    if evalb(LeadingMonomial(F_t_gb[curr_index], order_2) 
-      <> LeadingMonomial(G[curr_index], order_2)) then
-      lprint("There are the witness polynomials that prove"\
-       "G_s is not empty (g_j, h_j) respectively ", 
-      F_t_gb[curr_index], G[curr_index]):
+    tru_g_i := truncatePolynomial(G[curr_index], order_1, order_2):
+    if evalb(tru_g_i <> H_t[curr_index]) then
       repeat := true:
-      break:
     end if:
-    curr_index := curr_index + 1:
+    if evalb(G[curr_index] <> 0) then
+      H_t := subsop(curr_index = tru_g_i, H_t):
+    end if:
+    curr_index := curr_index + 1;
   end do:
 
-  #F   := G:
-  F   := InterReduce(G, order_2):
+  #F := InterReduce(G, order_2):
+  F := G:
   if repeat = false then
     lprint("Done"):
-    return F:
+    #return F:
+    return InterReduce(F, order_2):
   else
-    F_t := map(v -> truncatePolynomial(v, order_1, order_2), F):
+    #F_t := map(v -> truncatePolynomial(v, order_1, order_2), F):
+    F_t := H_t:
     lprint("Current F", F):
     lprint("Current F_t", F_t):
   end if:
