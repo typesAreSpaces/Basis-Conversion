@@ -78,8 +78,9 @@ while true do
     curr_index := curr_index + 1;
   end do:
 
+  #F := G:
+  F := Reduce(G, F, order_2):
   #F := InterReduce(G, order_2):
-  F := G:
   if repeat = false then
     lprint("Done"):
     #return F:
