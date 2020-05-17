@@ -3,11 +3,21 @@ with(LinearAlgebra,
 with(Groebner,      
   Basis, InterReduce, Reduce, LeadingTerm, LeadingMonomial, TestOrder): 
 
+kernelopts(assertlevel=1):
 writeto("output.txt"):
 
-truncatePolynomial := proc (poly, order_1, order_2)
-local leading_coeff_1, leading_mon_1, leading_term, 
+checkSameInformation := proc(basis1, basis2)
+local PI1, PI2:
+PI1 := PolynomialIdeal(basis1):
+PI2 := PolynomialIdeal(basis2):
+return (PI1 subset PI2) and (PI2 subset PI1):
+end proc:
+
+truncatePolynomial := proc (f, order_1, order_2)
+local poly, leading_coeff_1, leading_mon_1, leading_term, 
 curr_index, polys:
+
+poly := expand(f):
  
 if evalb(type(poly, `+`)) then
   leading_coeff_1, leading_mon_1 := LeadingTerm(poly, order_1):
@@ -28,14 +38,15 @@ if evalb(type(poly, `+`)) then
 else
   return poly:
 end if:
-
 end proc:
 
 basisConversion := proc (basis, order_1, order_2)
-local F, F_t, aux_F_t, num_iter, 
+local F_original, F_sanity_check, F, F_t, num_iter,
 F_t_gb, H_t, multipliers, 
 G, repeat, curr_index, num_elements,
 tru_g_i:
+
+F_original := Basis(basis, order_1):
 
 lprint("Step 1"):
 F   := Basis(basis, order_1):
@@ -74,22 +85,34 @@ while true do
     end if:
     if evalb(G[curr_index] <> 0) then
       H_t := subsop(curr_index = tru_g_i, H_t):
+    else
+      lprint("This zero (G[", curr_index, "]) becomes ", H_t[curr_index]):
     end if:
     curr_index := curr_index + 1;
   end do:
 
-  #F := G:
-  F := Reduce(G, F, order_2):
-  #F := InterReduce(G, order_2):
+  F := G:
+
+  F_sanity_check := Basis(F, order_1):
+  lprint("GB w.r.t. >1 of current F", F_sanity_check):
+  lprint("GB w.r.t. >1 of original input", F_original):
+  ASSERT(evalb(F_original = F_sanity_check)):
+
+  # This one doesn't work because after the second iteration, 
+  # it will vanish most of the polynomials
+  #F := Reduce(G, F, order_2): 
+  # This one neither because it can potentially decrease the dimension of F, 
+  # making a mismatch at the lifting stage
+  #F := InterReduce(G, order_2): 
   if repeat = false then
     lprint("Done"):
-    #return F:
     return InterReduce(F, order_2):
   else
-    #F_t := map(v -> truncatePolynomial(v, order_1, order_2), F):
     F_t := H_t:
-    lprint("Current F", F):
-    lprint("Current F_t", F_t):
+    lprint("Current F (it becomes G)"):
+    lprint(F):
+    lprint("Current F_t (it becomes tru(G_i) for zero entries of G and old H_t[i] for non-zero entries of G"):
+    lprint(F_t):
   end if:
 end do:
 
@@ -108,7 +131,7 @@ end proc:
 
 # ---------------------------------------------------------------------------
 # Testing
-#testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(x, y, z)):
+testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(x, y, z)):
 #testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(x, z, y)):
 #testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(y, x, z)):
 #testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], grlex(x, y, z), plex(y, z, x)):
@@ -117,5 +140,5 @@ end proc:
 #testBasisConversion([y^2-x,x^2-y*z-1,z^2-x], plex(x, y, z), grlex(x, y, z)):
 #testBasisConversion([x*y+z-x*z, x^2-z, 2*x^3-x^2*y*z-1], tdeg(x, y, z), plex(z, y, x)):
 #testBasisConversion([x + y + z, x*y + y*z + z*x, x*y*z-1], grlex(x, y, z), plex(x, y, z)):
-testBasisConversion([x + y + z + u, x*y + y*z + z*u + u*x, x*y*z + y*z*u + z*u*x + u*x*y, x*y*z*u-1], grlex(x, y, z, u), plex(x, y, z, u)):
+#testBasisConversion([x + y + z + u, x*y + y*z + z*u + u*x, x*y*z + y*z*u + z*u*x + u*x*y, x*y*z*u-1], grlex(x, y, z, u), plex(x, y, z, u)):
 # ---------------------------------------------------------------------------
