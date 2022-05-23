@@ -1,111 +1,111 @@
-with(LinearAlgebra, 
-  Multiply, Transpose):
-with(Groebner,      
-  Basis, Reduce, InterReduce, LeadingTerm, LeadingMonomial, TestOrder): 
+with(LinearAlgebra,
+     Multiply, Transpose):
+with(Groebner,
+     Basis, Reduce, InterReduce, LeadingTerm, LeadingMonomial, TestOrder):
 
 writeto("output.txt"):
 
 truncatePolynomial := proc (f, order_1, order_2)
-local poly, leading_coeff_1, leading_mon_1, leading_term, 
-curr_index, polys:
+local poly, leading_coeff_1, leading_mon_1, leading_term,
+    curr_index, polys:
 
-poly := expand(f):
- 
-if evalb(type(poly, `+`)) then
-  leading_coeff_1, leading_mon_1 := LeadingTerm(poly, order_1):
-  leading_term                   := leading_coeff_1 * leading_mon_1:
-  curr_index                     := 1:
+    poly := expand(f):
 
-  polys := sort([op(poly)], (b, a) -> TestOrder(a, b, order_2)):
+    if evalb(type(poly, `+`)) then
+        leading_coeff_1, leading_mon_1 := LeadingTerm(poly, order_1):
+        leading_term                   := leading_coeff_1 * leading_mon_1:
+        curr_index                     := 1:
 
-  while evalb(polys[curr_index] <> leading_term) do
-    curr_index := curr_index + 1:
-  end do:
+        polys := sort([op(poly)], (b, a) -> TestOrder(a, b, order_2)):
 
-  if curr_index = 1 then
-    return polys[1]:
-  else
-    return add(x, x in polys[1..curr_index]):
-  end if:
-else
-  return poly:
-end if:
+        while evalb(polys[curr_index] <> leading_term) do
+            curr_index := curr_index + 1:
+        end do:
+
+        if curr_index = 1 then
+            return polys[1]:
+        else
+            return add(x, x in polys[1..curr_index]):
+        end if:
+    else
+        return poly:
+    end if:
 end proc:
 
 basisConversion := proc (basis, order_1, order_2)
-local F_original, F_sanity_check, F, F_t, num_iter, 
-F_t_gb, multipliers, 
-G, repeat, curr_index, num_elements:
+local F_original, F_sanity_check, F, F_t, num_iter,
+    F_t_gb, multipliers,
+    G, repeat, curr_index, num_elements:
 
-F_original := Basis(basis, order_1):
+    F_original := Basis(basis, order_1):
 
-lprint("Step 1"):
-F   := Basis(basis, order_1):
-F_t := map(v -> truncatePolynomial(v, order_1, order_2), F):
-lprint("Current F", F):
-lprint("Current F_t", F_t):
-
-num_iter := 1:
-
-while true do
-  lprint("Iteration ", num_iter):
-  num_iter := num_iter + 1:
-
-  lprint("Step 2"):
-  F_t_gb, multipliers := Basis(F_t, order_2, output=extended):
-  lprint("Matrix of multipliers M': ", multipliers):
-  lprint("H (= M' F_t): ", F_t_gb):
-  
-  lprint("Step 3"):
-  G := convert(simplify(
-  Multiply(convert(multipliers, Matrix), Transpose(convert(F, Matrix)))), list):
-  lprint("G (= M' * F): ", G):
-
-  lprint("Step 4"):
-  repeat       := false:
-  curr_index   := 1:
-  num_elements := numelems(F_t_gb):
-  while curr_index < num_elements do
-    if evalb(LeadingMonomial(F_t_gb[curr_index], order_2) 
-      <> LeadingMonomial(G[curr_index], order_2)) then
-      lprint("There are the witness polynomials that prove"\
-       "G_s is not empty (g_j, h_j) respectively ", 
-      F_t_gb[curr_index], G[curr_index]):
-      repeat := true:
-      break:
-    end if:
-    curr_index := curr_index + 1:
-  end do:
-
-  #F   := G:
-  F   := InterReduce(G, order_2):
-
-  F_sanity_check := Basis(F, order_1):
-  lprint("GB w.r.t. >1 of current F", F_sanity_check):
-  lprint("GB w.r.t. >1 of original input", F_original):
-  ASSERT(evalb(F_original = F_sanity_check)):
-
-  if repeat = false then
-    lprint("Done"):
-    return F:
-  else
+    lprint("Step 1"):
+    F   := Basis(basis, order_1):
     F_t := map(v -> truncatePolynomial(v, order_1, order_2), F):
     lprint("Current F", F):
     lprint("Current F_t", F_t):
-  end if:
-end do:
+
+    num_iter := 1:
+
+    while true do
+        lprint("Iteration ", num_iter):
+        num_iter := num_iter + 1:
+
+        lprint("Step 2"):
+        F_t_gb, multipliers := Basis(F_t, order_2, output=extended):
+        lprint("Matrix of multipliers M': ", multipliers):
+        lprint("H (= M' F_t): ", F_t_gb):
+
+        lprint("Step 3"):
+        G := convert(simplify(
+            Multiply(convert(multipliers, Matrix), Transpose(convert(F, Matrix)))), list):
+        lprint("G (= M' * F): ", G):
+
+        lprint("Step 4"):
+        repeat       := false:
+        curr_index   := 1:
+        num_elements := numelems(F_t_gb):
+        while curr_index < num_elements do
+            if evalb(LeadingMonomial(F_t_gb[curr_index], order_2)
+                     <> LeadingMonomial(G[curr_index], order_2)) then
+                lprint("There are the witness polynomials that prove"\
+                       "G_s is not empty (g_j, h_j) respectively ",
+                       F_t_gb[curr_index], G[curr_index]):
+                repeat := true:
+                break:
+            end if:
+            curr_index := curr_index + 1:
+        end do:
+
+        #F   := G:
+        F   := InterReduce(G, order_2):
+
+        F_sanity_check := Basis(F, order_1):
+        lprint("GB w.r.t. >1 of current F", F_sanity_check):
+        lprint("GB w.r.t. >1 of original input", F_original):
+        ASSERT(evalb(F_original = F_sanity_check)):
+
+        if repeat = false then
+            lprint("Done"):
+            return F:
+        else
+            F_t := map(v -> truncatePolynomial(v, order_1, order_2), F):
+            lprint("Current F", F):
+            lprint("Current F_t", F_t):
+        end if:
+    end do:
 
 end proc:
 
 testBasisConversion := proc (basis, order_1, order_2)
 local output_1, output_2:
-lprint():
-lprint("Basis conversion of ", basis, " from ", order_1, " to ", order_2):
-output_1 := basisConversion(basis, order_1, order_2):
-output_2 := Basis(basis, order_2):
-lprint("Result obtained using implemented algorithm ", output_1):
-lprint("Result obtained using Maple Basis algorithm ", output_2):
-lprint("Are these results the same? ", evalb(output_1 = output_2)):
+    lprint():
+    lprint("Basis conversion of ", basis, " from ", order_1, " to ", order_2):
+    output_1 := basisConversion(basis, order_1, order_2):
+    output_2 := Basis(basis, order_2):
+    lprint("Result obtained using implemented algorithm ", output_1):
+    lprint("Result obtained using Maple Basis algorithm ", output_2):
+    lprint("Are these results the same? ", evalb(output_1 = output_2)):
 end proc:
 
 # ---------------------------------------------------------------------------
